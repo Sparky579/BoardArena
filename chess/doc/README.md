@@ -14,7 +14,8 @@ chess/
 │   └── styles.css
 ├── baseline/
 │   └── gpt5p5/
-│       └── bot.py
+│       ├── bot_easy.py
+│       └── bot_hard.py
 ├── doc/
 │   ├── README.md
 │   ├── GAME_RULE.md
@@ -78,16 +79,18 @@ http://127.0.0.1:8020/
 python BoardArena/chess/env/chess_web.py --port 8021
 ```
 
-可切换人人对战或人机对战。人机对战默认使用：
+可切换人人对战或人机对战。右侧下拉框可以选择 `/gpt5p5/bot_easy` 或 `/gpt5p5/bot_hard`，并可调整棋子移动动画速度。人机对战默认使用：
 
 ```text
-BoardArena/chess/baseline/gpt5p5/bot.py
+BoardArena/chess/baseline/gpt5p5/bot_hard.py
 ```
+
+人类落子会先立即渲染并播放动画，随后前端再请求 `/api/advance` 让 bot 思考并落子。
 
 指定端口或 bot：
 
 ```bash
-python BoardArena/chess/env/chess_web.py --port 8021 --bot BoardArena/chess/baseline/gpt5p5/bot.py
+python BoardArena/chess/env/chess_web.py --port 8021 --bot BoardArena/chess/baseline/gpt5p5/bot_hard.py
 ```
 
 ## Bot 对战
@@ -95,13 +98,13 @@ python BoardArena/chess/env/chess_web.py --port 8021 --bot BoardArena/chess/base
 单局：
 
 ```bash
-python BoardArena/chess/env/chess_env.py battle --bot BoardArena/chess/baseline/gpt5p5/bot.py --games 1 --seed 1 --keep-logs
+python BoardArena/chess/env/chess_env.py battle --bot BoardArena/chess/baseline/gpt5p5/bot_hard.py --games 1 --seed 1 --keep-logs
 ```
 
 批量：
 
 ```bash
-python BoardArena/chess/env/chess_env.py battle --bot BoardArena/chess/baseline/gpt5p5/bot.py --games 100 --seed 1
+python BoardArena/chess/env/chess_env.py battle --bot BoardArena/chess/baseline/gpt5p5/bot_easy.py --games 100 --seed 1
 ```
 
 生成最小示例 bot：

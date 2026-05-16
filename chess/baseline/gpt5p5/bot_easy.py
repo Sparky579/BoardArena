@@ -1,7 +1,6 @@
-"""Baseline chess bot for BoardArena/chess.
+"""Easy baseline chess bot for BoardArena/chess.
 
-The bot is intentionally dependency-light beyond python-chess and follows the
-standard BoardArena `choose_action(state)` interface.
+This is a one-ply heuristic bot. It is intentionally simple and fast.
 """
 
 from __future__ import annotations
@@ -12,7 +11,7 @@ except ImportError:  # pragma: no cover - lets the judge surface a clear result.
     chess = None
 
 
-name = "gpt5p5"
+name = "gpt5p5_easy"
 
 PIECE_VALUES = {
     "p": 100,
@@ -88,7 +87,7 @@ def _move_score(board, move, perspective):
         if board.is_check():
             score += 40
         score += _material_balance(board, perspective)
-        score += len(list(board.legal_moves))
+        score -= len(list(board.legal_moves))
         score -= _hanging_penalty(board, perspective)
     board.pop()
     return score

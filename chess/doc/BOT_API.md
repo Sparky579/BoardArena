@@ -101,7 +101,7 @@ state, reward, terminated, truncated, info = env.step("e2e4")
 from env.chess_env import battle_once
 
 result = battle_once(
-    "baseline/gpt5p5/bot.py",
+    "baseline/gpt5p5/bot_hard.py",
     players=2,
     seat=0,
     seed=1,
@@ -120,7 +120,7 @@ print(result)
     "result": "1-0",
     "plies": 73,
     "fen": "8/8/8/8/8/8/8/8 b - - 0 37",
-    "bot_names": ["gpt5p5", "system"],
+    "bot_names": ["gpt5p5_hard", "system"],
     "developer_seat": 0,
     "developer_win": True,
     "error": None
@@ -133,7 +133,7 @@ print(result)
 from env.chess_env import battle_many
 
 summary = battle_many(
-    "baseline/gpt5p5/bot.py",
+    "baseline/gpt5p5/bot_easy.py",
     games=100,
     seed=1,
     alternate_seats=True,
@@ -158,7 +158,7 @@ print(summary)
 ```python
 from env.chess_env import battle_once, get_match_log
 
-result = battle_once("baseline/gpt5p5/bot.py", keep_log=True)
+result = battle_once("baseline/gpt5p5/bot_hard.py", keep_log=True)
 log = get_match_log(result["game_id"])
 for item in log:
     print(item)
@@ -183,17 +183,17 @@ python env/chess_env.py sample-bot --output bot.py
 单局对战：
 
 ```bash
-python env/chess_env.py battle --bot baseline/gpt5p5/bot.py --games 1 --seat 0 --seed 1 --keep-logs
+python env/chess_env.py battle --bot baseline/gpt5p5/bot_hard.py --games 1 --seat 0 --seed 1 --keep-logs
 ```
 
 批量对战：
 
 ```bash
-python env/chess_env.py battle --bot baseline/gpt5p5/bot.py --games 100 --seed 1
+python env/chess_env.py battle --bot baseline/gpt5p5/bot_easy.py --games 100 --seed 1
 ```
 
 默认批量对战会轮换开发者 bot 的座位，减少先手影响。如需固定开发者 bot 在 `seat=0`：
 
 ```bash
-python env/chess_env.py battle --bot baseline/gpt5p5/bot.py --games 100 --fixed-seat
+python env/chess_env.py battle --bot baseline/gpt5p5/bot_easy.py --games 100 --fixed-seat
 ```

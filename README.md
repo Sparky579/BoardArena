@@ -93,17 +93,18 @@ python .\chess\env\chess_web.py
 
 不要直接用 Live Server 打开 `chess\env\index.html`，该页面依赖 `chess_web.py` 提供的本地 JSON API。
 如果默认端口被占用，服务会自动尝试后续端口，也可以传入 `--port 8021`。
+人机模式右侧可选择 `/gpt5p5/bot_easy` 或 `/gpt5p5/bot_hard`，并可调整动画速度。
 
 运行单局 Bot 对战：
 
 ```powershell
-python .\chess\env\chess_env.py battle --bot .\chess\baseline\gpt5p5\bot.py --games 1 --seed 1 --keep-logs
+python .\chess\env\chess_env.py battle --bot .\chess\baseline\gpt5p5\bot_hard.py --games 1 --seed 1 --keep-logs
 ```
 
 运行批量对战：
 
 ```powershell
-python .\chess\env\chess_env.py battle --bot .\chess\baseline\gpt5p5\bot.py --games 100 --seed 1
+python .\chess\env\chess_env.py battle --bot .\chess\baseline\gpt5p5\bot_easy.py --games 100 --seed 1
 ```
 
 更多说明见：

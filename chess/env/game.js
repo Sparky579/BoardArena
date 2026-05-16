@@ -6,6 +6,8 @@ const humanHumanBtn = document.getElementById("humanHumanBtn");
 const humanBotBtn = document.getElementById("humanBotBtn");
 const whiteSeatBtn = document.getElementById("whiteSeatBtn");
 const blackSeatBtn = document.getElementById("blackSeatBtn");
+const botSelect = document.getElementById("botSelect");
+const animationSpeedSelect = document.getElementById("animationSpeedSelect");
 const whitePlayer = document.getElementById("whitePlayer");
 const blackPlayer = document.getElementById("blackPlayer");
 const whiteType = document.getElementById("whiteType");
@@ -29,6 +31,10 @@ let selectedSquare = null;
 let orientation = "white";
 let mode = "human-human";
 let humanSeat = 0;
+let botId = "/gpt5p5/bot_hard";
+let advanceTimer = 0;
+let advanceInFlight = false;
+let activeMoveAnimations = [];
 
 async function api(path, payload) {
   const response = await fetch(path, {
@@ -42,15 +48,39 @@ async function api(path, payload) {
   return body;
 }
 
+async function loadBotOptions() {
+  try {
+    const response = await fetch("/api/bots");
+    if (!response.ok) return;
+    const body = await response.json();
+    if (!Array.isArray(body.bots) || body.bots.length === 0) return;
+    botSelect.innerHTML = "";
+    body.bots.forEach((bot) => {
+      const option = document.createElement("option");
+      option.value = bot;
+      option.textContent = bot;
+      botSelect.appendChild(option);
+    });
+    botId = body.default || body.bots[0];
+    renderModeControls();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 async function newGame() {
   try {
+    clearPendingAdvance();
+    clearMoveAnimations();
     selectedSquare = null;
     promotionPanel.hidden = true;
-    const body = await api("/api/new", { mode, human_seat: humanSeat });
+    const body = await api("/api/new", { mode, human_seat: humanSeat, bot: botId });
+    const previous = data;
     sessionId = body.session;
     data = body;
     if (mode === "human-bot") orientation = humanSeat === 0 ? "white" : "black";
-    render();
+    render(previous);
+    queueBotAdvance(0);
   } catch (error) {
     showServerError(error);
   }
@@ -58,16 +88,38 @@ async function newGame() {
 
 async function sendMove(action) {
   try {
+    clearPendingAdvance();
     selectedSquare = null;
     promotionPanel.hidden = true;
-    data = await api("/api/action", { session: sessionId, action });
-    render();
+    const previous = data;
+    const body = await api("/api/action", { session: sessionId, action });
+    data = body;
+    render(previous);
+    queueBotAdvance(getAnimationDuration() + 80);
   } catch (error) {
     showServerError(error);
   }
 }
 
+async function advanceBot() {
+  if (!data || !data.bot_turn || advanceInFlight) return;
+  try {
+    advanceInFlight = true;
+    const previous = data;
+    const body = await api("/api/advance", { session: sessionId });
+    data = body;
+    render(previous);
+    queueBotAdvance(getAnimationDuration() + 80);
+  } catch (error) {
+    showServerError(error);
+  } finally {
+    advanceInFlight = false;
+  }
+}
+
 function showServerError(error) {
+  clearPendingAdvance();
+  clearMoveAnimations();
   data = null;
   selectedSquare = null;
   promotionPanel.hidden = true;
@@ -78,17 +130,19 @@ function showServerError(error) {
   console.error(error);
 }
 
-function render() {
+function render(previousData = null) {
   if (!data) return;
   statusText.textContent = data.status_text;
   fenText.textContent = data.fen;
   whitePlayer.classList.toggle("active", data.actor === 0 && data.phase !== "game_over");
   blackPlayer.classList.toggle("active", data.actor === 1 && data.phase !== "game_over");
-  whiteType.textContent = data.mode === "human-human" || data.human_seats.includes(0) ? "人类" : "Bot";
-  blackType.textContent = data.mode === "human-human" || data.human_seats.includes(1) ? "人类" : "Bot";
+  const botName = data.bot_name ? `${data.bot_name} Bot` : "Bot";
+  whiteType.textContent = data.mode === "human-human" || data.human_seats.includes(0) ? "人类" : botName;
+  blackType.textContent = data.mode === "human-human" || data.human_seats.includes(1) ? "人类" : botName;
   renderModeControls();
   renderBoard();
   renderLog();
+  animateLastMove(previousData, data);
 }
 
 function renderModeControls() {
@@ -100,6 +154,8 @@ function renderModeControls() {
   blackSeatBtn.classList.toggle("selected", humanSeat === 1);
   whiteSeatBtn.setAttribute("aria-pressed", String(humanSeat === 0));
   blackSeatBtn.setAttribute("aria-pressed", String(humanSeat === 1));
+  botSelect.value = botId;
+  botSelect.disabled = mode !== "human-bot";
 }
 
 function renderBoard() {
@@ -120,6 +176,7 @@ function renderBoard() {
       const button = document.createElement("button");
       button.type = "button";
       button.className = `square ${isLightSquare(file, rank) ? "light" : "dark"}`;
+      button.dataset.square = square;
       button.setAttribute("aria-label", square);
 
       if (lastSquares.has(square)) button.classList.add("last");
@@ -134,6 +191,7 @@ function renderBoard() {
       if (piece) {
         const span = document.createElement("span");
         span.className = "piece";
+        span.dataset.square = square;
         span.textContent = PIECES[piece.color][piece.type];
         button.appendChild(span);
       }
@@ -230,10 +288,91 @@ function setHumanSeat(nextSeat) {
   if (mode === "human-bot") newGame();
 }
 
+function setBot(nextBot) {
+  botId = nextBot;
+  renderModeControls();
+  if (mode === "human-bot") newGame();
+}
+
+function queueBotAdvance(delay) {
+  clearPendingAdvance();
+  if (!data || !data.bot_turn) return;
+  advanceTimer = window.setTimeout(advanceBot, Math.max(0, delay));
+}
+
+function clearPendingAdvance() {
+  if (advanceTimer) {
+    window.clearTimeout(advanceTimer);
+    advanceTimer = 0;
+  }
+}
+
+function getAnimationDuration() {
+  return Number(animationSpeedSelect.value) || 0;
+}
+
+function animateLastMove(previousData, nextData) {
+  clearMoveAnimations();
+  const duration = getAnimationDuration();
+  if (!previousData || !nextData || duration <= 0) return;
+  if (!nextData.last_move || previousData.plies === nextData.plies) return;
+
+  const fromSquare = nextData.last_move.slice(0, 2);
+  const toSquare = nextData.last_move.slice(2, 4);
+  const fromEl = boardEl.querySelector(`.square[data-square="${fromSquare}"]`);
+  const toPiece = boardEl.querySelector(`.piece[data-square="${toSquare}"]`);
+  if (!fromEl || !toPiece) return;
+
+  const fromRect = fromEl.getBoundingClientRect();
+  const toRect = toPiece.getBoundingClientRect();
+  const startLeft = fromRect.left + (fromRect.width - toRect.width) / 2;
+  const startTop = fromRect.top + (fromRect.height - toRect.height) / 2;
+  const clone = toPiece.cloneNode(true);
+  const style = window.getComputedStyle(toPiece);
+
+  clone.classList.remove("animating");
+  clone.classList.add("piece-clone");
+  clone.style.left = `${startLeft}px`;
+  clone.style.top = `${startTop}px`;
+  clone.style.width = `${toRect.width}px`;
+  clone.style.height = `${toRect.height}px`;
+  clone.style.fontSize = style.fontSize;
+  clone.style.color = style.color;
+  document.body.appendChild(clone);
+  toPiece.classList.add("animating");
+
+  const animation = clone.animate(
+    [
+      { transform: "translate(0, 0)" },
+      { transform: `translate(${toRect.left - startLeft}px, ${toRect.top - startTop}px)` },
+    ],
+    { duration, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }
+  );
+
+  const cleanup = () => {
+    toPiece.classList.remove("animating");
+    clone.remove();
+    activeMoveAnimations = activeMoveAnimations.filter((item) => item.animation !== animation);
+  };
+  animation.onfinish = cleanup;
+  animation.oncancel = cleanup;
+  activeMoveAnimations.push({ animation, clone, target: toPiece });
+}
+
+function clearMoveAnimations() {
+  activeMoveAnimations.forEach(({ animation, clone, target }) => {
+    animation.cancel();
+    clone.remove();
+    target.classList.remove("animating");
+  });
+  activeMoveAnimations = [];
+}
+
 humanHumanBtn.addEventListener("click", () => setMode("human-human"));
 humanBotBtn.addEventListener("click", () => setMode("human-bot"));
 whiteSeatBtn.addEventListener("click", () => setHumanSeat(0));
 blackSeatBtn.addEventListener("click", () => setHumanSeat(1));
+botSelect.addEventListener("change", () => setBot(botSelect.value));
 newGameBtn.addEventListener("click", newGame);
 flipBtn.addEventListener("click", () => {
   orientation = orientation === "white" ? "black" : "white";
@@ -243,4 +382,4 @@ promotionPanel.addEventListener("click", (event) => {
   if (event.target === promotionPanel) promotionPanel.hidden = true;
 });
 
-newGame();
+loadBotOptions().finally(newGame);
