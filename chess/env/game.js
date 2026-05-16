@@ -8,6 +8,7 @@ const whiteSeatBtn = document.getElementById("whiteSeatBtn");
 const blackSeatBtn = document.getElementById("blackSeatBtn");
 const botSelect = document.getElementById("botSelect");
 const animationSpeedSelect = document.getElementById("animationSpeedSelect");
+const orientationSelect = document.getElementById("orientationSelect");
 const whitePlayer = document.getElementById("whitePlayer");
 const blackPlayer = document.getElementById("blackPlayer");
 const whiteType = document.getElementById("whiteType");
@@ -37,14 +38,27 @@ let advanceInFlight = false;
 let activeMoveAnimations = [];
 
 async function api(path, payload) {
-  const response = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  let response;
+  try {
+    response = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    error.path = path;
+    error.isNetworkError = true;
+    throw error;
+  }
   const contentType = response.headers.get("content-type") || "";
   const body = contentType.includes("application/json") ? await response.json() : {};
-  if (!response.ok) throw new Error(body.error || "request failed");
+  if (!response.ok) {
+    const error = new Error(body.error || `${path} failed with ${response.status}`);
+    error.path = path;
+    error.status = response.status;
+    error.hasJsonBody = contentType.includes("application/json");
+    throw error;
+  }
   return body;
 }
 
@@ -79,25 +93,37 @@ async function newGame() {
     sessionId = body.session;
     data = body;
     if (mode === "human-bot") orientation = humanSeat === 0 ? "white" : "black";
+    orientationSelect.value = orientation;
     render(previous);
     queueBotAdvance(0);
   } catch (error) {
-    showServerError(error);
+    showRequestError(error, { clear: true });
   }
 }
 
 async function sendMove(action) {
+  const previous = data;
   try {
     clearPendingAdvance();
     selectedSquare = null;
     promotionPanel.hidden = true;
-    const previous = data;
+    const optimistic = buildOptimisticMove(previous, action);
+    if (optimistic) {
+      data = optimistic;
+      render(previous);
+    }
+    const animationDelay = optimistic ? getAnimationDuration() : 0;
     const body = await api("/api/action", { session: sessionId, action });
+    if (animationDelay > 0) await sleep(animationDelay);
     data = body;
-    render(previous);
-    queueBotAdvance(getAnimationDuration() + 80);
+    render(null);
+    queueBotAdvance(80);
   } catch (error) {
-    showServerError(error);
+    if (previous) {
+      data = previous;
+      render(null);
+    }
+    showRequestError(error, { clear: false });
   }
 }
 
@@ -111,22 +137,32 @@ async function advanceBot() {
     render(previous);
     queueBotAdvance(getAnimationDuration() + 80);
   } catch (error) {
-    showServerError(error);
+    showRequestError(error, { clear: false });
   } finally {
     advanceInFlight = false;
   }
 }
 
-function showServerError(error) {
+function showRequestError(error, options = {}) {
   clearPendingAdvance();
   clearMoveAnimations();
-  data = null;
   selectedSquare = null;
   promotionPanel.hidden = true;
-  boardEl.innerHTML = "";
-  fenText.textContent = "";
-  moveLog.innerHTML = "";
-  statusText.textContent = "请用 python BoardArena/chess/env/chess_web.py 启动；Live Server 没有 /api/new 和 /api/action。";
+  const apiPath = error.path || "";
+  const isMissingApi = error.status === 404 && apiPath.startsWith("/api/") && !error.hasJsonBody;
+  if (options.clear || isMissingApi) {
+    data = null;
+    boardEl.innerHTML = "";
+    fenText.textContent = "";
+    moveLog.innerHTML = "";
+  }
+  if (isMissingApi) {
+    statusText.textContent = "请用 python BoardArena/chess/env/chess_web.py 启动；Live Server 没有本地 JSON API。";
+  } else if (error.isNetworkError) {
+    statusText.textContent = "连接本地 chess_web.py 服务失败，请确认服务仍在运行。";
+  } else {
+    statusText.textContent = `请求失败：${error.message}`;
+  }
   console.error(error);
 }
 
@@ -156,6 +192,7 @@ function renderModeControls() {
   blackSeatBtn.setAttribute("aria-pressed", String(humanSeat === 1));
   botSelect.value = botId;
   botSelect.disabled = mode !== "human-bot";
+  orientationSelect.value = orientation;
 }
 
 function renderBoard() {
@@ -294,6 +331,12 @@ function setBot(nextBot) {
   if (mode === "human-bot") newGame();
 }
 
+function setOrientation(nextOrientation) {
+  orientation = nextOrientation;
+  renderModeControls();
+  renderBoard();
+}
+
 function queueBotAdvance(delay) {
   clearPendingAdvance();
   if (!data || !data.bot_turn) return;
@@ -311,11 +354,67 @@ function getAnimationDuration() {
   return Number(animationSpeedSelect.value) || 0;
 }
 
+function sleep(milliseconds) {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+function buildOptimisticMove(current, action) {
+  if (!current || !Array.isArray(current.pieces)) return null;
+  const fromSquare = action.slice(0, 2);
+  const toSquare = action.slice(2, 4);
+  const moved = current.pieces.find((piece) => piece.square === fromSquare);
+  if (!moved) return null;
+
+  const captured = current.pieces.find((piece) => piece.square === toSquare);
+  let capturedSquare = captured ? toSquare : null;
+  if (!captured && moved.type === "p" && fromSquare[0] !== toSquare[0]) {
+    const capturedRank = moved.color === "white" ? Number(toSquare[1]) - 1 : Number(toSquare[1]) + 1;
+    capturedSquare = `${toSquare[0]}${capturedRank}`;
+  }
+
+  const promotedType = action.length === 5 ? action[4] : moved.type;
+  const pieces = current.pieces
+    .filter((piece) => piece.square !== fromSquare && piece.square !== toSquare && piece.square !== capturedSquare)
+    .map((piece) => ({ ...piece }));
+
+  if (moved.type === "k" && Math.abs(FILES.indexOf(fromSquare[0]) - FILES.indexOf(toSquare[0])) === 2) {
+    const rank = fromSquare[1];
+    const kingSide = toSquare[0] === "g";
+    const rookFrom = `${kingSide ? "h" : "a"}${rank}`;
+    const rookTo = `${kingSide ? "f" : "d"}${rank}`;
+    const rook = pieces.find((piece) => piece.square === rookFrom);
+    if (rook) rook.square = rookTo;
+  }
+
+  pieces.push({
+    ...moved,
+    square: toSquare,
+    type: promotedType,
+    symbol: moved.color === "white" ? promotedType.toUpperCase() : promotedType,
+  });
+
+  const nextActor = 1 - current.actor;
+  const botTurn = current.mode === "human-bot" && !current.human_seats.includes(nextActor);
+  const side = nextActor === 0 ? "白方" : "黑方";
+  return {
+    ...current,
+    actor: nextActor,
+    turn: nextActor === 0 ? "white" : "black",
+    legal_actions: [],
+    pieces,
+    plies: current.plies + 1,
+    last_move: action,
+    human_turn: current.mode !== "human-bot" || current.human_seats.includes(nextActor),
+    bot_turn: botTurn,
+    status_text: botTurn ? `${side} Bot 思考中` : `${side}行动`,
+  };
+}
+
 function animateLastMove(previousData, nextData) {
-  clearMoveAnimations();
   const duration = getAnimationDuration();
   if (!previousData || !nextData || duration <= 0) return;
   if (!nextData.last_move || previousData.plies === nextData.plies) return;
+  clearMoveAnimations();
 
   const fromSquare = nextData.last_move.slice(0, 2);
   const toSquare = nextData.last_move.slice(2, 4);
@@ -341,22 +440,29 @@ function animateLastMove(previousData, nextData) {
   document.body.appendChild(clone);
   toPiece.classList.add("animating");
 
+  runPieceAnimation(clone, toPiece, toRect.left - startLeft, toRect.top - startTop, duration);
+}
+
+function runPieceAnimation(clone, hiddenPiece, deltaX, deltaY, duration) {
   const animation = clone.animate(
     [
       { transform: "translate(0, 0)" },
-      { transform: `translate(${toRect.left - startLeft}px, ${toRect.top - startTop}px)` },
+      { transform: `translate(${deltaX}px, ${deltaY}px)` },
     ],
     { duration, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }
   );
 
-  const cleanup = () => {
-    toPiece.classList.remove("animating");
-    clone.remove();
-    activeMoveAnimations = activeMoveAnimations.filter((item) => item.animation !== animation);
-  };
-  animation.onfinish = cleanup;
-  animation.oncancel = cleanup;
-  activeMoveAnimations.push({ animation, clone, target: toPiece });
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      hiddenPiece.classList.remove("animating");
+      clone.remove();
+      activeMoveAnimations = activeMoveAnimations.filter((item) => item.animation !== animation);
+      resolve();
+    };
+    animation.onfinish = cleanup;
+    animation.oncancel = cleanup;
+    activeMoveAnimations.push({ animation, clone, target: hiddenPiece });
+  });
 }
 
 function clearMoveAnimations() {
@@ -368,15 +474,21 @@ function clearMoveAnimations() {
   activeMoveAnimations = [];
 }
 
+function clearSelectionHighlights() {
+  boardEl.querySelectorAll(".selected, .target").forEach((element) => {
+    element.classList.remove("selected", "target");
+  });
+}
+
 humanHumanBtn.addEventListener("click", () => setMode("human-human"));
 humanBotBtn.addEventListener("click", () => setMode("human-bot"));
 whiteSeatBtn.addEventListener("click", () => setHumanSeat(0));
 blackSeatBtn.addEventListener("click", () => setHumanSeat(1));
 botSelect.addEventListener("change", () => setBot(botSelect.value));
+orientationSelect.addEventListener("change", () => setOrientation(orientationSelect.value));
 newGameBtn.addEventListener("click", newGame);
 flipBtn.addEventListener("click", () => {
-  orientation = orientation === "white" ? "black" : "white";
-  renderBoard();
+  setOrientation(orientation === "white" ? "black" : "white");
 });
 promotionPanel.addEventListener("click", (event) => {
   if (event.target === promotionPanel) promotionPanel.hidden = true;
