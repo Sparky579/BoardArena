@@ -1,0 +1,1649 @@
+{
+  "algorithm": "sampled-recursive-infoset-cfr",
+  "bust_penalty": 0.08,
+  "card_loss_penalty": 0.02,
+  "explore": 0.02,
+  "game": "simplified-two-player-skull",
+  "infosets": 382,
+  "iterations": 3000,
+  "point_reward": 0.1,
+  "policy": {
+    "p=0|score=0-0|hand=0,0|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.8167664578211132,
+      "BID_3": 0.08941899602952147,
+      "PASS": 0.09381454614936532
+    },
+    "p=0|score=0-0|hand=0,0|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.08244535519125686,
+      "PASS": 0.917554644808743
+    },
+    "p=0|score=0-0|hand=0,0|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=0,0|pile=FF|opp_cards=4|opp_pile=2|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.3333333333333333,
+      "BID_4": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=0|score=0-0|hand=0,0|pile=FF|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.5059603896437319,
+      "BID_2": 0.10150751072961373,
+      "BID_3": 0.14611210888357604,
+      "BID_4": 0.24641999074307838
+    },
+    "p=0|score=0-0|hand=0,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.3333333333333333,
+      "BID_3": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=0|score=0-0|hand=0,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.7886777605999831,
+      "BID_2": 0.21132223940001693
+    },
+    "p=0|score=0-0|hand=0,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.24885057471264352,
+      "BID_3": 0.5811494252873565,
+      "PASS": 0.16999999999999998
+    },
+    "p=0|score=0-0|hand=0,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=0,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.5,
+      "BID_2": 0.5
+    },
+    "p=0|score=0-0|hand=0,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_S": 1.0
+    },
+    "p=0|score=0-0|hand=0,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.3333333333333333,
+      "BID_3": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=0|score=0-0|hand=0,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=0,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=0,1|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.959859793814433,
+      "BID_2": 0.026940206185566955,
+      "PLAY_S": 0.013200000000000017
+    },
+    "p=0|score=0-0|hand=1,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-0|hand=1,0|pile=FF|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.5,
+      "PASS": 0.5
+    },
+    "p=0|score=0-0|hand=1,0|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.5,
+      "PASS": 0.5
+    },
+    "p=0|score=0-0|hand=1,0|pile=FS|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.3333333333333333,
+      "BID_3": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=0|score=0-0|hand=1,0|pile=FS|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.17333333333333334,
+      "PASS": 0.8266666666666667
+    },
+    "p=0|score=0-0|hand=1,0|pile=FS|opp_cards=3|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=1,0|pile=FS|opp_cards=3|opp_pile=2|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.3333333333333333,
+      "BID_4": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=0|score=0-0|hand=1,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.39488291907506606,
+      "BID_3": 0.3521072796934867,
+      "PASS": 0.2530098012314472
+    },
+    "p=0|score=0-0|hand=1,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.9083333333333333,
+      "PASS": 0.09166666666666667
+    },
+    "p=0|score=0-0|hand=1,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=1,0|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=1,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.316101852412495,
+      "BID_2": 0.47884743370850424,
+      "PLAY_F": 0.2050507138790007
+    },
+    "p=0|score=0-0|hand=1,0|pile=SF|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.41214062588968076,
+      "PASS": 0.5878593741103193
+    },
+    "p=0|score=0-0|hand=1,0|pile=SF|opp_cards=3|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=1,0|pile=SF|opp_cards=3|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "BID_4": 0.5,
+      "PASS": 0.5
+    },
+    "p=0|score=0-0|hand=1,0|pile=SF|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.565951316613496,
+      "BID_2": 0.047914062500000014,
+      "BID_3": 0.329134620886504,
+      "BID_4": 0.028500000000000004,
+      "PLAY_F": 0.028500000000000004
+    },
+    "p=0|score=0-0|hand=1,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=1,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.977803313307496,
+      "BID_2": 0.009528223410576292,
+      "PLAY_F": 0.012668463281927712
+    },
+    "p=0|score=0-0|hand=1,1|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.06233023950003217,
+      "PLAY_S": 0.9376697604999679
+    },
+    "p=0|score=0-0|hand=1,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.07434846845108367,
+      "PLAY_S": 0.9256515315489163
+    },
+    "p=0|score=0-0|hand=1,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.17631726419539853,
+      "PLAY_S": 0.8236827358046015
+    },
+    "p=0|score=0-0|hand=1,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.9560693247363709,
+      "BID_3": 0.02033950189866194,
+      "PASS": 0.023591173364967254
+    },
+    "p=0|score=0-0|hand=1,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.13379848926541968,
+      "PASS": 0.8662015107345803
+    },
+    "p=0|score=0-0|hand=1,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=1,1|pile=FF|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.19198920306758394,
+      "BID_2": 0.22700402050227053,
+      "BID_3": 0.3116514420935956,
+      "BID_4": 0.06251207729468601,
+      "PLAY_F": 0.1490654792640861,
+      "PLAY_S": 0.05777777777777777
+    },
+    "p=0|score=0-0|hand=1,1|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=1,1|pile=F|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.05441854527898668,
+      "BID_2": 0.8496948483890046,
+      "PLAY_F": 0.016629944526037683,
+      "PLAY_S": 0.07925666180597109
+    },
+    "p=0|score=0-0|hand=1,1|pile=F|opp_cards=3|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=1,1|pile=F|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.20175893005235612,
+      "BID_2": 0.17222946881145682,
+      "BID_3": 0.5101831467868415,
+      "PLAY_F": 0.052733443183142575,
+      "PLAY_S": 0.06309501116620299
+    },
+    "p=0|score=0-0|hand=1,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=1,1|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.0061784827150835105,
+      "BID_2": 0.9485896122054022,
+      "PLAY_F": 0.005539647577092396,
+      "PLAY_S": 0.039692257502421946
+    },
+    "p=0|score=0-0|hand=2,0|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-0|hand=2,0|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-0|hand=2,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-0|hand=2,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.14215743200837153,
+      "BID_3": 0.6895939896964208,
+      "PASS": 0.16824857829520756
+    },
+    "p=0|score=0-0|hand=2,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.92,
+      "PASS": 0.08
+    },
+    "p=0|score=0-0|hand=2,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=2,0|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=2,0|pile=F|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.023859649122807004,
+      "BID_2": 0.952280701754386,
+      "PLAY_F": 0.023859649122807004
+    },
+    "p=0|score=0-0|hand=2,0|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=2,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.011866931986325803,
+      "BID_2": 0.9781239881203453,
+      "PLAY_F": 0.010009079893328885
+    },
+    "p=0|score=0-0|hand=2,0|pile=SF|opp_cards=3|opp_pile=3|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.5238250652741515,
+      "BID_2": 0.13617493472584857,
+      "BID_3": 0.085,
+      "BID_4": 0.085,
+      "BID_5": 0.085,
+      "PLAY_F": 0.085
+    },
+    "p=0|score=0-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.9043996970577306,
+      "BID_3": 0.010896693058654644,
+      "PASS": 0.08470360988361485
+    },
+    "p=0|score=0-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.06356770544352401,
+      "PASS": 0.936432294556476
+    },
+    "p=0|score=0-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=2|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.3333333333333333,
+      "BID_4": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=0|score=0-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.22110950661853188,
+      "BID_2": 0.18278219013237068,
+      "BID_3": 0.10200000000000001,
+      "BID_4": 0.10200000000000001,
+      "PLAY_F": 0.3921083032490975
+    },
+    "p=0|score=0-0|hand=2,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.5,
+      "PASS": 0.5
+    },
+    "p=0|score=0-0|hand=2,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=2,0|pile=S|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.22867937266810176,
+      "BID_2": 0.1007629347670201,
+      "PLAY_F": 0.6705576925648782
+    },
+    "p=0|score=0-0|hand=2,0|pile=S|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.1275,
+      "BID_2": 0.1275,
+      "BID_3": 0.6174999999999999,
+      "PLAY_F": 0.1275
+    },
+    "p=0|score=0-0|hand=2,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.16999999999999998,
+      "BID_2": 0.66,
+      "PLAY_F": 0.16999999999999998
+    },
+    "p=0|score=0-0|hand=2,1|pile=-|opp_cards=2|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.7160724855006697,
+      "PLAY_S": 0.2839275144993303
+    },
+    "p=0|score=0-0|hand=2,1|pile=-|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.17333333333333334,
+      "PLAY_S": 0.8266666666666667
+    },
+    "p=0|score=0-0|hand=2,1|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.7193137052306804,
+      "PLAY_S": 0.28068629476931967
+    },
+    "p=0|score=0-0|hand=2,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.4683976015211429,
+      "PLAY_S": 0.531602398478857
+    },
+    "p=0|score=0-0|hand=2,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.9889254385964914,
+      "PLAY_S": 0.01107456140350857
+    },
+    "p=0|score=0-0|hand=2,1|pile=F|opp_cards=2|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.9871176470588235,
+      "PASS": 0.012882352941176449
+    },
+    "p=0|score=0-0|hand=2,1|pile=F|opp_cards=2|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=2,1|pile=F|opp_cards=2|opp_pile=2|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.9410000000000001,
+      "PASS": 0.05900000000000001
+    },
+    "p=0|score=0-0|hand=2,1|pile=F|opp_cards=2|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.483960211299654,
+      "BID_2": 0.044399977365552526,
+      "BID_3": 0.44659633307392393,
+      "PLAY_F": 0.012521739130434787,
+      "PLAY_S": 0.012521739130434787
+    },
+    "p=0|score=0-0|hand=2,1|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.5,
+      "PASS": 0.5
+    },
+    "p=0|score=0-0|hand=2,1|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=2,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=2,1|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.43799777177160776,
+      "BID_2": 0.3838920420810396,
+      "PLAY_F": 0.16026724223769243,
+      "PLAY_S": 0.017842943909660288
+    },
+    "p=0|score=0-0|hand=3,0|pile=-|opp_cards=2|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-0|hand=3,0|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-0|hand=3,0|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-0|hand=3,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-0|hand=3,0|pile=S|opp_cards=2|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.9886107333403078,
+      "PASS": 0.011389266659692164
+    },
+    "p=0|score=0-0|hand=3,0|pile=S|opp_cards=2|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=3,0|pile=S|opp_cards=2|opp_pile=2|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.24184726522187816,
+      "PASS": 0.7581527347781218
+    },
+    "p=0|score=0-0|hand=3,0|pile=S|opp_cards=2|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=3,0|pile=S|opp_cards=2|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.24640618787723648,
+      "BID_2": 0.31383068344146947,
+      "BID_3": 0.43298279253429395,
+      "PLAY_F": 0.006780336146999997
+    },
+    "p=0|score=0-0|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.9840243902439024,
+      "PASS": 0.01597560975609758
+    },
+    "p=0|score=0-0|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=3,0|pile=S|opp_cards=3|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=3,0|pile=S|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.012000000000000004,
+      "BID_2": 0.4386233198772748,
+      "BID_3": 0.5197112443590819,
+      "PLAY_F": 0.02966543576364319
+    },
+    "p=0|score=0-0|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-0|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.7729009091906486,
+      "BID_2": 0.007359354726387082,
+      "PLAY_F": 0.21973973608296435
+    },
+    "p=0|score=0-0|hand=3,1|pile=-|opp_cards=1|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.8543334311581786,
+      "PLAY_S": 0.1456665688418214
+    },
+    "p=0|score=0-0|hand=3,1|pile=-|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.13743617904057537,
+      "PLAY_S": 0.8625638209594246
+    },
+    "p=0|score=0-0|hand=3,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.013700149078550775,
+      "PLAY_S": 0.9862998509214492
+    },
+    "p=0|score=0-0|hand=3,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.39967211062155267,
+      "PLAY_S": 0.6003278893784473
+    },
+    "p=0|score=0-1|hand=1,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5,
+      "PLAY_S": 0.5
+    },
+    "p=0|score=0-1|hand=1,1|pile=-|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5,
+      "PLAY_S": 0.5
+    },
+    "p=0|score=0-1|hand=2,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-1|hand=2,0|pile=-|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-1|hand=2,0|pile=FS|opp_cards=3|opp_pile=3|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.16666666666666666,
+      "BID_2": 0.16666666666666666,
+      "BID_3": 0.16666666666666666,
+      "BID_4": 0.16666666666666666,
+      "BID_5": 0.16666666666666666,
+      "PLAY_F": 0.16666666666666666
+    },
+    "p=0|score=0-1|hand=2,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.16999999999999998,
+      "BID_2": 0.66,
+      "PLAY_F": 0.16999999999999998
+    },
+    "p=0|score=0-1|hand=2,0|pile=SF|opp_cards=4|opp_pile=2|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.25,
+      "BID_3": 0.25,
+      "BID_4": 0.25,
+      "PASS": 0.25
+    },
+    "p=0|score=0-1|hand=2,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3333333333333333,
+      "BID_2": 0.3333333333333333,
+      "PLAY_F": 0.3333333333333333
+    },
+    "p=0|score=0-1|hand=2,1|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.22853820598006644,
+      "PLAY_S": 0.7714617940199336
+    },
+    "p=0|score=0-1|hand=2,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5,
+      "PLAY_S": 0.5
+    },
+    "p=0|score=0-1|hand=2,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5,
+      "PLAY_S": 0.5
+    },
+    "p=0|score=0-1|hand=2,1|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.8266666666666667,
+      "PASS": 0.17333333333333334
+    },
+    "p=0|score=0-1|hand=2,1|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-1|hand=2,1|pile=F|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.10200000000000002,
+      "BID_2": 0.5378013544018058,
+      "BID_3": 0.15619864559819427,
+      "PLAY_F": 0.10200000000000002,
+      "PLAY_S": 0.10200000000000002
+    },
+    "p=0|score=0-1|hand=2,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.5,
+      "PASS": 0.5
+    },
+    "p=0|score=0-1|hand=2,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-1|hand=3,0|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-1|hand=3,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=0-1|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.745,
+      "PASS": 0.255
+    },
+    "p=0|score=0-1|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-1|hand=3,0|pile=S|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.4582555558139644,
+      "BID_2": 0.054000000000000006,
+      "BID_3": 0.4337444441860356,
+      "PLAY_F": 0.054000000000000006
+    },
+    "p=0|score=0-1|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.745,
+      "PASS": 0.255
+    },
+    "p=0|score=0-1|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=0-1|hand=3,0|pile=S|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.39731012658227854,
+      "BID_2": 0.1275,
+      "BID_3": 0.34768987341772145,
+      "PLAY_F": 0.1275
+    },
+    "p=0|score=0-1|hand=3,1|pile=-|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.440971379386462,
+      "PLAY_S": 0.559028620613538
+    },
+    "p=0|score=0-1|hand=3,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.17041763127515566,
+      "PLAY_S": 0.8295823687248444
+    },
+    "p=0|score=0-1|hand=3,1|pile=-|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.05308482142857125,
+      "PLAY_S": 0.9469151785714288
+    },
+    "p=0|score=1-0|hand=0,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.16999999999999998,
+      "BID_3": 0.5540540540540538,
+      "PASS": 0.2759459459459461
+    },
+    "p=0|score=1-0|hand=0,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.745,
+      "PASS": 0.255
+    },
+    "p=0|score=1-0|hand=0,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=1-0|hand=0,1|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3333333333333333,
+      "BID_2": 0.3333333333333333,
+      "PLAY_S": 0.3333333333333333
+    },
+    "p=0|score=1-0|hand=1,0|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.3333333333333333,
+      "BID_3": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=0|score=1-0|hand=1,0|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=1-0|hand=1,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.16999999999999998,
+      "BID_3": 0.18884615384615377,
+      "PASS": 0.6411538461538462
+    },
+    "p=0|score=1-0|hand=1,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.23288053391449576,
+      "BID_2": 0.565278591701381,
+      "PLAY_F": 0.20184087438412324
+    },
+    "p=0|score=1-0|hand=1,0|pile=SFF|opp_cards=4|opp_pile=3|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3183319490586932,
+      "BID_2": 0.08567691029900333,
+      "BID_3": 0.07285714285714286,
+      "BID_4": 0.07285714285714286,
+      "BID_5": 0.07285714285714286,
+      "BID_6": 0.1920334994462901,
+      "PLAY_F": 0.1853862126245847
+    },
+    "p=0|score=1-0|hand=1,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.2373021730217302,
+      "BID_3": 0.6471422714227142,
+      "PASS": 0.11555555555555554
+    },
+    "p=0|score=1-0|hand=1,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=1-0|hand=1,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.061111111111111095,
+      "BID_2": 0.12916666666666668,
+      "PLAY_F": 0.8097222222222222
+    },
+    "p=0|score=1-0|hand=1,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.045000000000000005,
+      "PLAY_S": 0.955
+    },
+    "p=0|score=1-0|hand=1,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.3321195171830221,
+      "PASS": 0.6678804828169779
+    },
+    "p=0|score=1-0|hand=1,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=1-0|hand=1,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=1-0|hand=1,1|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.4212076105111059,
+      "BID_2": 0.38373214490701435,
+      "PLAY_F": 0.17208735855183532,
+      "PLAY_S": 0.022972886030044506
+    },
+    "p=0|score=1-0|hand=2,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=1-0|hand=2,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.36313751002097694,
+      "BID_3": 0.08240035248008534,
+      "PASS": 0.5544621374989377
+    },
+    "p=0|score=1-0|hand=2,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.6101804279961428,
+      "PASS": 0.38981957200385714
+    },
+    "p=0|score=1-0|hand=2,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=1-0|hand=2,0|pile=FS|opp_cards=4|opp_pile=2|phase=bid|bid=4|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=1-0|hand=2,0|pile=FS|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.2,
+      "BID_2": 0.2,
+      "BID_3": 0.2,
+      "BID_4": 0.2,
+      "PLAY_F": 0.2
+    },
+    "p=0|score=1-0|hand=2,0|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=1-0|hand=2,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.23495866316015107,
+      "BID_2": 0.5662842344130958,
+      "PLAY_F": 0.19875710242675315
+    },
+    "p=0|score=1-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.043278035832780344,
+      "BID_3": 0.6213785041244069,
+      "PASS": 0.33534346004281274
+    },
+    "p=0|score=1-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.21264749586528783,
+      "PASS": 0.7873525041347122
+    },
+    "p=0|score=1-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=1-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.16979056047197646,
+      "BID_2": 0.06933333333333334,
+      "BID_3": 0.06933333333333334,
+      "BID_4": 0.25618303696003747,
+      "PLAY_F": 0.43535973590131943
+    },
+    "p=0|score=1-0|hand=2,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.08833333333333332,
+      "BID_2": 0.08833333333333332,
+      "PLAY_F": 0.8233333333333334
+    },
+    "p=0|score=1-0|hand=2,1|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.05900000000000001,
+      "PLAY_S": 0.9410000000000001
+    },
+    "p=0|score=1-0|hand=2,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.257159367533046,
+      "PLAY_S": 0.7428406324669539
+    },
+    "p=0|score=1-0|hand=2,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.9441237953207697,
+      "PLAY_S": 0.05587620467923028
+    },
+    "p=0|score=1-0|hand=2,1|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.01614868888351594,
+      "BID_2": 0.33014610558372187,
+      "PLAY_F": 0.21525069122435597,
+      "PLAY_S": 0.43845451430840626
+    },
+    "p=0|score=1-0|hand=3,0|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=1-0|hand=3,0|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=1-0|hand=3,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=0|score=1-0|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.892,
+      "PASS": 0.10800000000000001
+    },
+    "p=0|score=1-0|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=1-0|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.2725581395348836,
+      "BID_2": 0.5574418604651163,
+      "PLAY_F": 0.16999999999999998
+    },
+    "p=0|score=1-0|hand=3,0|pile=S|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.06625000000000002,
+      "BID_2": 0.06625000000000002,
+      "BID_3": 0.7499465811965812,
+      "PLAY_F": 0.11755341880341881
+    },
+    "p=0|score=1-0|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=0|score=1-0|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.2943684058241444,
+      "BID_2": 0.15464212508927283,
+      "PLAY_F": 0.5509894690865828
+    },
+    "p=0|score=1-0|hand=3,1|pile=-|opp_cards=2|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.6548205701154037,
+      "PLAY_S": 0.34517942988459627
+    },
+    "p=0|score=1-0|hand=3,1|pile=-|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5920621886229666,
+      "PLAY_S": 0.4079378113770335
+    },
+    "p=0|score=1-0|hand=3,1|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.255,
+      "PLAY_S": 0.745
+    },
+    "p=0|score=1-0|hand=3,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.018750000000000003,
+      "PLAY_S": 0.9812500000000001
+    },
+    "p=0|score=1-0|hand=3,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.421503898138762,
+      "PLAY_S": 0.5784961018612379
+    },
+    "p=0|score=1-1|hand=2,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5,
+      "PLAY_S": 0.5
+    },
+    "p=0|score=1-1|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3333333333333333,
+      "BID_2": 0.3333333333333333,
+      "PLAY_F": 0.3333333333333333
+    },
+    "p=0|score=1-1|hand=3,1|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.1325,
+      "PLAY_S": 0.8674999999999999
+    },
+    "p=0|score=1-1|hand=3,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5,
+      "PLAY_S": 0.5
+    },
+    "p=1|score=0-0|hand=0,0|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.946233660130719,
+      "BID_3": 0.033488562091503284,
+      "PASS": 0.02027777777777776
+    },
+    "p=1|score=0-0|hand=0,0|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.9686956521739131,
+      "PASS": 0.03130434782608698
+    },
+    "p=1|score=0-0|hand=0,0|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=0,0|pile=FF|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.25,
+      "BID_2": 0.25,
+      "BID_3": 0.25,
+      "BID_4": 0.25
+    },
+    "p=1|score=0-0|hand=0,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.5679068984317324,
+      "BID_3": 0.039816292109489684,
+      "PASS": 0.392276809458778
+    },
+    "p=1|score=0-0|hand=0,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.02633333333333336,
+      "PASS": 0.9736666666666667
+    },
+    "p=1|score=0-0|hand=0,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=0,0|pile=FS|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.25,
+      "BID_2": 0.25,
+      "BID_3": 0.25,
+      "BID_4": 0.25
+    },
+    "p=1|score=0-0|hand=0,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.9015835468432134,
+      "BID_2": 0.09841645315678664
+    },
+    "p=1|score=0-0|hand=0,0|pile=SFF|opp_cards=4|opp_pile=2|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.2,
+      "BID_3": 0.2,
+      "BID_4": 0.2,
+      "BID_5": 0.2,
+      "PASS": 0.2
+    },
+    "p=1|score=0-0|hand=0,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.4589378706264099,
+      "BID_3": 0.3529858256166593,
+      "PASS": 0.18807630375693074
+    },
+    "p=1|score=0-0|hand=0,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.04307692307692306,
+      "PASS": 0.9569230769230769
+    },
+    "p=1|score=0-0|hand=0,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=0,0|pile=SF|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.6174999999999999,
+      "BID_2": 0.1275,
+      "BID_3": 0.1275,
+      "BID_4": 0.1275
+    },
+    "p=1|score=0-0|hand=0,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.9711538461538461,
+      "BID_2": 0.028846153846153872
+    },
+    "p=1|score=0-0|hand=0,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_S": 1.0
+    },
+    "p=1|score=0-0|hand=0,1|pile=FF|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.343009158364666,
+      "BID_3": 0.5414352860797784,
+      "PASS": 0.11555555555555554
+    },
+    "p=1|score=0-0|hand=0,1|pile=FF|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.745,
+      "PASS": 0.255
+    },
+    "p=1|score=0-0|hand=0,1|pile=FF|opp_cards=3|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=0,1|pile=FF|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.10200000000000001,
+      "BID_2": 0.1724973357015986,
+      "BID_3": 0.3030479573712256,
+      "BID_4": 0.3204547069271758,
+      "PLAY_S": 0.10200000000000001
+    },
+    "p=1|score=0-0|hand=0,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.1325,
+      "PASS": 0.8674999999999999
+    },
+    "p=1|score=0-0|hand=0,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=0,1|pile=FF|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.2,
+      "BID_2": 0.2,
+      "BID_3": 0.2,
+      "BID_4": 0.2,
+      "PLAY_S": 0.2
+    },
+    "p=1|score=0-0|hand=0,1|pile=F|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.6558823529411764,
+      "BID_2": 0.17411764705882363,
+      "PLAY_S": 0.16999999999999998
+    },
+    "p=1|score=0-0|hand=0,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=0,1|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.208793535496384,
+      "BID_2": 0.3069375462239523,
+      "PLAY_S": 0.4842689182796636
+    },
+    "p=1|score=0-0|hand=1,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-0|hand=1,0|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.5,
+      "PASS": 0.5
+    },
+    "p=1|score=0-0|hand=1,0|pile=FF|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.2,
+      "BID_2": 0.2,
+      "BID_3": 0.2,
+      "BID_4": 0.2,
+      "PLAY_F": 0.2
+    },
+    "p=1|score=0-0|hand=1,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.255,
+      "PASS": 0.745
+    },
+    "p=1|score=0-0|hand=1,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=1,0|pile=F|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.061111111111111095,
+      "BID_2": 0.8777777777777778,
+      "PLAY_F": 0.061111111111111095
+    },
+    "p=1|score=0-0|hand=1,0|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=1,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.29770794769248093,
+      "BID_2": 0.6131362619322318,
+      "PLAY_F": 0.08915579037528724
+    },
+    "p=1|score=0-0|hand=1,0|pile=SF|opp_cards=3|opp_pile=2|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.5768416274166778,
+      "BID_3": 0.08666666666666667,
+      "BID_4": 0.24982503924998878,
+      "PASS": 0.08666666666666667
+    },
+    "p=1|score=0-0|hand=1,0|pile=SF|opp_cards=3|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "BID_4": 0.892,
+      "PASS": 0.10800000000000001
+    },
+    "p=1|score=0-0|hand=1,0|pile=SF|opp_cards=3|opp_pile=3|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.28183237906473474,
+      "BID_2": 0.14792833024553384,
+      "BID_3": 0.1484628493524199,
+      "BID_4": 0.30622088578175594,
+      "BID_5": 0.05777777777777777,
+      "PLAY_F": 0.05777777777777777
+    },
+    "p=1|score=0-0|hand=1,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.3333333333333333,
+      "BID_3": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=1|score=0-0|hand=1,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.7993373430380576,
+      "PASS": 0.20066265696194238
+    },
+    "p=1|score=0-0|hand=1,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=1,0|pile=SF|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.27837254901960784,
+      "BID_2": 0.10200000000000001,
+      "BID_3": 0.10200000000000001,
+      "BID_4": 0.10200000000000001,
+      "PLAY_F": 0.4156274509803921
+    },
+    "p=1|score=0-0|hand=1,0|pile=S|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3333333333333333,
+      "BID_2": 0.3333333333333333,
+      "PLAY_F": 0.3333333333333333
+    },
+    "p=1|score=0-0|hand=1,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=1,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.9136025525969218,
+      "BID_2": 0.007309154984553985,
+      "PLAY_F": 0.07908829241852418
+    },
+    "p=1|score=0-0|hand=1,1|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.7522535211267606,
+      "PLAY_S": 0.2477464788732394
+    },
+    "p=1|score=0-0|hand=1,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.01286241182412775,
+      "PLAY_S": 0.9871375881758722
+    },
+    "p=1|score=0-0|hand=1,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.27250175514795527,
+      "PLAY_S": 0.7274982448520447
+    },
+    "p=1|score=0-0|hand=1,1|pile=F|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.9420618947496785,
+      "BID_2": 0.03744973315729824,
+      "PLAY_F": 0.011988372093023262,
+      "PLAY_S": 0.008500000000000006
+    },
+    "p=1|score=0-0|hand=1,1|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.745,
+      "PASS": 0.255
+    },
+    "p=1|score=0-0|hand=1,1|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=1,1|pile=F|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.0572422010822514,
+      "BID_2": 0.41836250501751254,
+      "PLAY_F": 0.5071452939002361,
+      "PLAY_S": 0.01725000000000001
+    },
+    "p=1|score=0-0|hand=1,1|pile=F|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.1393502722323049,
+      "BID_2": 0.3750127041742287,
+      "BID_3": 0.28163702359346643,
+      "PLAY_F": 0.10200000000000001,
+      "PLAY_S": 0.10200000000000001
+    },
+    "p=1|score=0-0|hand=1,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=1,1|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.00584894601902036,
+      "BID_2": 0.9832772999701617,
+      "PLAY_F": 0.005708213470277466,
+      "PLAY_S": 0.0051655405405405565
+    },
+    "p=1|score=0-0|hand=2,0|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-0|hand=2,0|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-0|hand=2,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-0|hand=2,0|pile=F|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.4020184491124954,
+      "BID_2": 0.587471746965936,
+      "PLAY_F": 0.010509803921568653
+    },
+    "p=1|score=0-0|hand=2,0|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,0|pile=F|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.059144486692015226,
+      "BID_2": 0.8933555133079848,
+      "PLAY_F": 0.047499999999999994
+    },
+    "p=1|score=0-0|hand=2,0|pile=F|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.25,
+      "BID_2": 0.25,
+      "BID_3": 0.25,
+      "PLAY_F": 0.25
+    },
+    "p=1|score=0-0|hand=2,0|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.007230857800805994,
+      "BID_2": 0.9852051715479121,
+      "PLAY_F": 0.007563970651281875
+    },
+    "p=1|score=0-0|hand=2,0|pile=SF|opp_cards=2|opp_pile=2|phase=bid|bid=4|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=2|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.5336020036429872,
+      "BID_3": 0.1980100182149363,
+      "BID_4": 0.1275,
+      "PASS": 0.1408879781420765
+    },
+    "p=1|score=0-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=3|phase=bid|bid=3|high=opp|turn=me": {
+      "BID_4": 0.3333333333333333,
+      "BID_5": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=1|score=0-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=3|phase=bid|bid=5|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,0|pile=SF|opp_cards=4|opp_pile=3|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.1609893048128342,
+      "BID_2": 0.1806417112299465,
+      "BID_3": 0.1727807486631016,
+      "BID_4": 0.22387700534759364,
+      "BID_5": 0.17671122994652405,
+      "PLAY_F": 0.08499999999999999
+    },
+    "p=1|score=0-0|hand=2,0|pile=S|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.2736022297022192,
+      "BID_2": 0.6833900456197874,
+      "PLAY_F": 0.043007724677993235
+    },
+    "p=1|score=0-0|hand=2,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.9083333333333333,
+      "PASS": 0.09166666666666667
+    },
+    "p=1|score=0-0|hand=2,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,0|pile=S|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3333333333333333,
+      "BID_2": 0.3333333333333333,
+      "PLAY_F": 0.3333333333333333
+    },
+    "p=1|score=0-0|hand=2,0|pile=S|opp_cards=3|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,0|pile=S|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.1850282143776557,
+      "BID_2": 0.36177974912255806,
+      "BID_3": 0.10088891503583365,
+      "PLAY_F": 0.3523031214639525
+    },
+    "p=1|score=0-0|hand=2,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3955207602623738,
+      "BID_2": 0.4483770170950526,
+      "PLAY_F": 0.15610222264257356
+    },
+    "p=1|score=0-0|hand=2,1|pile=-|opp_cards=2|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.2865597401964929,
+      "PLAY_S": 0.713440259803507
+    },
+    "p=1|score=0-0|hand=2,1|pile=-|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.9242748071324983,
+      "PLAY_S": 0.07572519286750162
+    },
+    "p=1|score=0-0|hand=2,1|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.9666666666666667,
+      "PLAY_S": 0.033333333333333354
+    },
+    "p=1|score=0-0|hand=2,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.04945761093494,
+      "PLAY_S": 0.9505423890650601
+    },
+    "p=1|score=0-0|hand=2,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.8925193690667257,
+      "PLAY_S": 0.10748063093327424
+    },
+    "p=1|score=0-0|hand=2,1|pile=F|opp_cards=1|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.9812500000000001,
+      "PASS": 0.018750000000000003
+    },
+    "p=1|score=0-0|hand=2,1|pile=F|opp_cards=1|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,1|pile=F|opp_cards=2|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.9755882352941176,
+      "PASS": 0.024411764705882376
+    },
+    "p=1|score=0-0|hand=2,1|pile=F|opp_cards=2|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,1|pile=F|opp_cards=2|opp_pile=2|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.5,
+      "PASS": 0.5
+    },
+    "p=1|score=0-0|hand=2,1|pile=F|opp_cards=2|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.394486334977654,
+      "BID_2": 0.06933333333333334,
+      "BID_3": 0.39751366502234603,
+      "PLAY_F": 0.06933333333333334,
+      "PLAY_S": 0.06933333333333334
+    },
+    "p=1|score=0-0|hand=2,1|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.6929846514676862,
+      "PASS": 0.3070153485323139
+    },
+    "p=1|score=0-0|hand=2,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,1|pile=F|opp_cards=4|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=2,1|pile=F|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.00817021276595745,
+      "BID_2": 0.24320803254669437,
+      "BID_3": 0.7322813291554333,
+      "PLAY_F": 0.00817021276595745,
+      "PLAY_S": 0.00817021276595745
+    },
+    "p=1|score=0-0|hand=3,0|pile=-|opp_cards=2|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-0|hand=3,0|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-0|hand=3,0|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-0|hand=3,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=1|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.97775,
+      "PASS": 0.022250000000000013
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=1|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=2|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.9884876543209878,
+      "PASS": 0.011512345679012185
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=2|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=2|opp_pile=2|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.9573333333333333,
+      "PASS": 0.04266666666666667
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=2|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=2|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3606033916787836,
+      "BID_2": 0.47947145808626523,
+      "BID_3": 0.12343359015104327,
+      "PLAY_F": 0.036491560083907845
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.9083333333333333,
+      "PASS": 0.09166666666666667
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=3|opp_pile=2|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.8674999999999999,
+      "PASS": 0.1325
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=3|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.19949699513199765,
+      "BID_2": 0.2823155761959723,
+      "BID_3": 0.5037643517489532,
+      "PLAY_F": 0.014423076923076929
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.951850403571859,
+      "PASS": 0.04814959642814091
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=4|opp_pile=2|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.8484577298514259,
+      "PASS": 0.1515422701485741
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=4|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-0|hand=3,0|pile=S|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.5045659892111419,
+      "BID_2": 0.19770459923514844,
+      "BID_3": 0.29228797011226815,
+      "PLAY_F": 0.005441441441441367
+    },
+    "p=1|score=0-0|hand=3,1|pile=-|opp_cards=1|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.557609217115712,
+      "PLAY_S": 0.44239078288428796
+    },
+    "p=1|score=0-0|hand=3,1|pile=-|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.11128506159381253,
+      "PLAY_S": 0.8887149384061875
+    },
+    "p=1|score=0-0|hand=3,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.01083191850594205,
+      "PLAY_S": 0.989168081494058
+    },
+    "p=1|score=0-0|hand=3,1|pile=-|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.11666149999979052,
+      "PLAY_S": 0.8833385000002095
+    },
+    "p=1|score=0-1|hand=0,1|pile=FF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.3333333333333333,
+      "BID_3": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=1|score=0-1|hand=1,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.051887794954433755,
+      "BID_2": 0.8513668064896508,
+      "PLAY_F": 0.09674539855591549
+    },
+    "p=1|score=0-1|hand=1,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-1|hand=1,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.07486212396476453,
+      "BID_2": 0.6745569379452319,
+      "PLAY_F": 0.25058093809000365
+    },
+    "p=1|score=0-1|hand=1,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.033333333333333354,
+      "PLAY_S": 0.9666666666666667
+    },
+    "p=1|score=0-1|hand=1,1|pile=-|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.8078187750113317,
+      "PLAY_S": 0.19218122498866835
+    },
+    "p=1|score=0-1|hand=1,1|pile=F|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.7831158985338192,
+      "BID_2": 0.06969592373438527,
+      "PLAY_F": 0.03222222222222223,
+      "PLAY_S": 0.11496595550957332
+    },
+    "p=1|score=0-1|hand=1,1|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.1275,
+      "BID_2": 0.48160931174089067,
+      "PLAY_F": 0.26339068825910933,
+      "PLAY_S": 0.1275
+    },
+    "p=1|score=0-1|hand=2,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-1|hand=2,0|pile=-|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-1|hand=2,0|pile=F|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.11555555555555554,
+      "BID_2": 0.7688888888888888,
+      "PLAY_F": 0.11555555555555554
+    },
+    "p=1|score=0-1|hand=2,0|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-1|hand=2,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.18227273034634386,
+      "BID_2": 0.7838383807647672,
+      "PLAY_F": 0.03388888888888888
+    },
+    "p=1|score=0-1|hand=2,0|pile=SF|opp_cards=4|opp_pile=3|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.16666666666666666,
+      "BID_2": 0.16666666666666666,
+      "BID_3": 0.16666666666666666,
+      "BID_4": 0.16666666666666666,
+      "BID_5": 0.16666666666666666,
+      "PLAY_F": 0.16666666666666666
+    },
+    "p=1|score=0-1|hand=2,0|pile=S|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3333333333333333,
+      "BID_2": 0.3333333333333333,
+      "PLAY_F": 0.3333333333333333
+    },
+    "p=1|score=0-1|hand=2,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.031215627513503683,
+      "BID_2": 0.8951731270087014,
+      "PLAY_F": 0.07361124547779492
+    },
+    "p=1|score=0-1|hand=2,1|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.927979797979798,
+      "PLAY_S": 0.07202020202020203
+    },
+    "p=1|score=0-1|hand=2,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.1325,
+      "PLAY_S": 0.8674999999999999
+    },
+    "p=1|score=0-1|hand=2,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.04585365853658538,
+      "PLAY_S": 0.9541463414634146
+    },
+    "p=1|score=0-1|hand=2,1|pile=F|opp_cards=2|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.255,
+      "PASS": 0.745
+    },
+    "p=1|score=0-1|hand=2,1|pile=F|opp_cards=2|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-1|hand=2,1|pile=F|opp_cards=2|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.2,
+      "BID_2": 0.2,
+      "BID_3": 0.2,
+      "PLAY_F": 0.2,
+      "PLAY_S": 0.2
+    },
+    "p=1|score=0-1|hand=2,1|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-1|hand=2,1|pile=F|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.2,
+      "BID_2": 0.2,
+      "BID_3": 0.2,
+      "PLAY_F": 0.2,
+      "PLAY_S": 0.2
+    },
+    "p=1|score=0-1|hand=2,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-1|hand=2,1|pile=F|opp_cards=4|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-1|hand=2,1|pile=F|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.2,
+      "BID_2": 0.2,
+      "BID_3": 0.2,
+      "PLAY_F": 0.2,
+      "PLAY_S": 0.2
+    },
+    "p=1|score=0-1|hand=3,0|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-1|hand=3,0|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-1|hand=3,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-1|hand=3,0|pile=-|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=2|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.8266666666666667,
+      "PASS": 0.17333333333333334
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=2|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=2|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.04658239080198733,
+      "BID_2": 0.42648791940611996,
+      "BID_3": 0.4947074675696705,
+      "PLAY_F": 0.03222222222222223
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.9642105263157895,
+      "PASS": 0.035789473684210545
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=3|opp_pile=2|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.5759220779220778,
+      "PASS": 0.42407792207792205
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=3|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=3|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.5086601340700633,
+      "BID_2": 0.2238595024661663,
+      "BID_3": 0.2402076361910432,
+      "PLAY_F": 0.02727272727272728
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.733911064935508,
+      "PASS": 0.26608893506449205
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=4|opp_pile=2|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.27783653846153844,
+      "PASS": 0.7221634615384616
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=4|opp_pile=2|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=0-1|hand=3,0|pile=S|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.26605246845019914,
+      "BID_2": 0.5321299450095754,
+      "BID_3": 0.1925193409261903,
+      "PLAY_F": 0.009298245614035094
+    },
+    "p=1|score=0-1|hand=3,1|pile=-|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.2373939276453955,
+      "PLAY_S": 0.7626060723546044
+    },
+    "p=1|score=0-1|hand=3,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.018750000000000003,
+      "PLAY_S": 0.9812500000000001
+    },
+    "p=1|score=0-1|hand=3,1|pile=-|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.014579439252336481,
+      "PLAY_S": 0.9854205607476635
+    },
+    "p=1|score=1-0|hand=1,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.21305057635144947,
+      "BID_2": 0.519321464140814,
+      "PLAY_F": 0.26762795950773655
+    },
+    "p=1|score=1-0|hand=1,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.3333333333333333,
+      "BID_3": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=1|score=1-0|hand=1,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "BID_3": 0.5,
+      "PASS": 0.5
+    },
+    "p=1|score=1-0|hand=1,0|pile=SF|opp_cards=4|opp_pile=1|phase=bid|bid=3|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=1-0|hand=1,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.015495495495495493,
+      "BID_2": 0.015495495495495493,
+      "PLAY_F": 0.969009009009009
+    },
+    "p=1|score=1-0|hand=1,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.02139534883720931,
+      "PLAY_S": 0.9786046511627906
+    },
+    "p=1|score=1-0|hand=1,1|pile=F|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.1675547760904743,
+      "BID_2": 0.6999452239095257,
+      "PLAY_F": 0.06625,
+      "PLAY_S": 0.06625
+    },
+    "p=1|score=1-0|hand=1,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=1-0|hand=1,1|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.029930004513994777,
+      "BID_2": 0.9455332745077439,
+      "PLAY_F": 0.015203649470726544,
+      "PLAY_S": 0.009333071507534771
+    },
+    "p=1|score=1-0|hand=2,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=1-0|hand=2,0|pile=FS|opp_cards=4|opp_pile=1|phase=bid|bid=1|high=opp|turn=me": {
+      "BID_2": 0.3333333333333333,
+      "BID_3": 0.3333333333333333,
+      "PASS": 0.3333333333333333
+    },
+    "p=1|score=1-0|hand=2,0|pile=FS|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.2,
+      "BID_2": 0.2,
+      "BID_3": 0.2,
+      "BID_4": 0.2,
+      "PLAY_F": 0.2
+    },
+    "p=1|score=1-0|hand=2,0|pile=F|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.24924710307157405,
+      "BID_2": 0.6624195635950927,
+      "PLAY_F": 0.08833333333333333
+    },
+    "p=1|score=1-0|hand=2,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.020277777777777763,
+      "BID_2": 0.9353572369287443,
+      "PLAY_F": 0.04436498529347803
+    },
+    "p=1|score=1-0|hand=2,0|pile=S|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=1-0|hand=2,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3272843256027976,
+      "BID_2": 0.24804015320320405,
+      "PLAY_F": 0.4246755211939984
+    },
+    "p=1|score=1-0|hand=2,1|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.9454545454545454,
+      "PLAY_S": 0.05454545454545456
+    },
+    "p=1|score=1-0|hand=2,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.745,
+      "PLAY_S": 0.255
+    },
+    "p=1|score=1-0|hand=2,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.9137337345223667,
+      "PLAY_S": 0.08626626547763323
+    },
+    "p=1|score=1-0|hand=2,1|pile=F|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.06264705882352943,
+      "BID_2": 0.8293529411764705,
+      "PLAY_F": 0.054000000000000006,
+      "PLAY_S": 0.054000000000000006
+    },
+    "p=1|score=1-0|hand=2,1|pile=F|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=1-0|hand=2,1|pile=F|opp_cards=4|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=1-0|hand=2,1|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.027703715856878395,
+      "BID_2": 0.9284387612628631,
+      "PLAY_F": 0.013956730845918884,
+      "PLAY_S": 0.029900792034339683
+    },
+    "p=1|score=1-0|hand=3,0|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=1-0|hand=3,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=1-0|hand=3,0|pile=S|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.5170833333333335,
+      "BID_2": 0.16999999999999998,
+      "PLAY_F": 0.3129166666666666
+    },
+    "p=1|score=1-0|hand=3,0|pile=S|opp_cards=3|opp_pile=1|phase=bid|bid=2|high=opp|turn=me": {
+      "PASS": 1.0
+    },
+    "p=1|score=1-0|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3333333333333333,
+      "BID_2": 0.3333333333333333,
+      "PLAY_F": 0.3333333333333333
+    },
+    "p=1|score=1-0|hand=3,1|pile=-|opp_cards=2|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.7714309089253816,
+      "PLAY_S": 0.2285690910746184
+    },
+    "p=1|score=1-0|hand=3,1|pile=-|opp_cards=2|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5,
+      "PLAY_S": 0.5
+    },
+    "p=1|score=1-0|hand=3,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.255,
+      "PLAY_S": 0.745
+    },
+    "p=1|score=1-0|hand=3,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.9618511267736869,
+      "PLAY_S": 0.03814887322631312
+    },
+    "p=1|score=1-1|hand=2,0|pile=F|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.16999999999999998,
+      "BID_2": 0.66,
+      "PLAY_F": 0.16999999999999998
+    },
+    "p=1|score=1-1|hand=2,0|pile=SF|opp_cards=4|opp_pile=2|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.2,
+      "BID_2": 0.2,
+      "BID_3": 0.2,
+      "BID_4": 0.2,
+      "PLAY_F": 0.2
+    },
+    "p=1|score=1-1|hand=2,1|pile=-|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5,
+      "PLAY_S": 0.5
+    },
+    "p=1|score=1-1|hand=3,0|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 1.0
+    },
+    "p=1|score=1-1|hand=3,0|pile=S|opp_cards=4|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "BID_1": 0.3333333333333333,
+      "BID_2": 0.3333333333333333,
+      "PLAY_F": 0.3333333333333333
+    },
+    "p=1|score=1-1|hand=3,1|pile=-|opp_cards=3|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5,
+      "PLAY_S": 0.5
+    },
+    "p=1|score=1-1|hand=3,1|pile=-|opp_cards=3|opp_pile=1|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5,
+      "PLAY_S": 0.5
+    },
+    "p=1|score=1-1|hand=3,1|pile=-|opp_cards=4|opp_pile=0|phase=play|bid=0|high=none|turn=me": {
+      "PLAY_F": 0.5,
+      "PLAY_S": 0.5
+    }
+  },
+  "recall": "compact",
+  "rollouts_per_action": 16,
+  "updates_per_trajectory": 8
+}

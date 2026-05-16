@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>路墙棋对战</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="game-area" aria-label="路墙棋棋盘">
+      <div class="top-bar">
+        <div>
+          <h1>路墙棋</h1>
+          <p id="statusText" class="status-text">蓝方行动</p>
+        </div>
+        <div class="actions">
+          <button id="undoBtn" class="icon-button" type="button" aria-label="悔棋" title="悔棋">↶</button>
+          <button id="resetBtn" class="text-button" type="button">重新开始</button>
+        </div>
+      </div>
+
+      <div id="board" class="board" aria-label="9乘9棋盘"></div>
+    </section>
+
+    <aside class="side-panel" aria-label="对局信息">
+      <div class="players">
+        <article id="playerA" class="player-card active">
+          <div class="player-title">
+            <span class="pawn-mark blue"></span>
+            <strong>蓝方</strong>
+          </div>
+          <span><span id="wallsA">10</span> 墙</span>
+        </article>
+        <article id="playerB" class="player-card">
+          <div class="player-title">
+            <span class="pawn-mark red"></span>
+            <strong>红方</strong>
+          </div>
+          <span><span id="wallsB">10</span> 墙</span>
+        </article>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">放墙方向</span>
+        <div class="segmented" role="group" aria-label="放墙方向">
+          <button id="horizontalBtn" type="button" class="selected" aria-pressed="true">横墙</button>
+          <button id="verticalBtn" type="button" aria-pressed="false">竖墙</button>
+        </div>
+      </div>
+
+      <div class="rule-list">
+        <h2>规则</h2>
+        <p>每回合选择移动一格，或放置一堵两格长的墙。先到达对面底线的一方获胜。</p>
+        <p>墙不能重叠、交叉，也不能完全堵死任一方通往终点的路线。</p>
+      </div>
+
+      <div class="log-panel">
+        <h2>记录</h2>
+        <ol id="moveLog" class="move-log"></ol>
+      </div>
+    </aside>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
