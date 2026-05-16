@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BoardArena Chess</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="board-area" aria-label="国际象棋棋盘">
+      <div class="top-bar">
+        <div>
+          <h1>国际象棋</h1>
+          <p id="statusText" class="status-text">准备开始</p>
+        </div>
+        <div class="top-actions">
+          <button id="flipBtn" class="icon-button" type="button" aria-label="翻转棋盘" title="翻转棋盘">↕</button>
+          <button id="newGameBtn" class="text-button" type="button">新局</button>
+        </div>
+      </div>
+
+      <div id="board" class="board" aria-label="8乘8棋盘"></div>
+    </section>
+
+    <aside class="side-panel" aria-label="对局信息">
+      <div class="control-group">
+        <span class="control-label">模式</span>
+        <div class="segmented" role="group" aria-label="模式">
+          <button id="humanHumanBtn" type="button" class="selected" aria-pressed="true">人人</button>
+          <button id="humanBotBtn" type="button" aria-pressed="false">人机</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">人类执子</span>
+        <div class="segmented" role="group" aria-label="人类执子">
+          <button id="whiteSeatBtn" type="button" class="selected" aria-pressed="true">白</button>
+          <button id="blackSeatBtn" type="button" aria-pressed="false">黑</button>
+        </div>
+      </div>
+
+      <div class="players">
+        <article id="whitePlayer" class="player-card">
+          <div class="player-title">
+            <span class="piece-mark">♔</span>
+            <strong>白方</strong>
+          </div>
+          <span id="whiteType">人类</span>
+        </article>
+        <article id="blackPlayer" class="player-card">
+          <div class="player-title">
+            <span class="piece-mark black">♚</span>
+            <strong>黑方</strong>
+          </div>
+          <span id="blackType">人类</span>
+        </article>
+      </div>
+
+      <div class="fen-panel">
+        <h2>FEN</h2>
+        <p id="fenText"></p>
+      </div>
+
+      <div class="log-panel">
+        <h2>记录</h2>
+        <ol id="moveLog" class="move-log"></ol>
+      </div>
+    </aside>
+  </main>
+
+  <div id="promotionPanel" class="promotion-panel" hidden>
+    <div class="promotion-box" role="dialog" aria-label="升变">
+      <span>升变</span>
+      <div id="promotionChoices" class="promotion-choices"></div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
