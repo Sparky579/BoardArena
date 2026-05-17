@@ -19,8 +19,8 @@ except ImportError:  # pragma: no cover - lets the judge surface a clear result.
 
 name = "gpt5p5_hard"
 
-MAX_TIME_SECONDS = float(os.environ.get("BOARDARENA_CHESS_HARD_TIME", "1.35"))
-ENDGAME_TIME_SECONDS = float(os.environ.get("BOARDARENA_CHESS_HARD_ENDGAME_TIME", "1.75"))
+MAX_TIME_SECONDS = float(os.environ.get("BOARDARENA_CHESS_HARD_TIME", "1.6"))
+ENDGAME_TIME_SECONDS = float(os.environ.get("BOARDARENA_CHESS_HARD_ENDGAME_TIME", "1.6"))
 MAX_DEPTH = 64
 QUIESCENCE_DEPTH = 8
 INF = 10_000_000
@@ -37,6 +37,9 @@ TT_UPPER = 2
 
 TEMPO = 14
 ASPIRATION_WINDOW = 32
+REPETITION_ESCAPE_SCORE = -260
+REPETITION_SECOND_PENALTY = 90
+REPETITION_DRAW_PENALTY = 280
 
 PIECE_VALUES = {
     chess.PAWN: 100,
@@ -314,7 +317,7 @@ def choose_action(state):
     if chess is None:
         return sorted(legal)[0]
 
-    board = chess.Board(state["fen"])
+    board = _board_from_state(state)
     book_move = _book_move(state, legal)
     if book_move is not None:
         return book_move
@@ -399,6 +402,7 @@ class Searcher:
         best_score = -INF
         best_move = preferred
         moves = self._ordered_moves(list(self.board.legal_moves), preferred, 0)
+        root_static = self._evaluate()
         searched = 0
 
         for move in moves:
@@ -412,6 +416,7 @@ class Searcher:
                 score = -self._search(depth - 1 + extension, -alpha - 1, -alpha, 1, True, False)
                 if alpha < score < beta:
                     score = -self._search(depth - 1 + extension, -beta, -alpha, 1, True, True)
+            score -= self._root_repetition_penalty(root_static)
             self.board.pop()
             searched += 1
 
@@ -749,6 +754,15 @@ class Searcher:
 
     def _capture_value(self, move):
         return PIECE_VALUES.get(_captured_piece_type(self.board, move), 0)
+
+    def _root_repetition_penalty(self, root_static):
+        if root_static <= REPETITION_ESCAPE_SCORE:
+            return 0
+        if self.board.can_claim_threefold_repetition() or self.board.is_repetition(3):
+            return REPETITION_DRAW_PENALTY + max(0, root_static) // 4
+        if self.board.is_repetition(2):
+            return REPETITION_SECOND_PENALTY + max(0, root_static) // 10
+        return 0
 
     def _record_quiet_cutoff(self, move, depth, ply):
         if ply < MAX_PLY:
@@ -1153,6 +1167,35 @@ def _book_move(state, legal):
     return None
 
 
+def _board_from_state(state):
+    board = chess.Board(state["fen"])
+    history = state.get("san_history") or ()
+    if not history:
+        return board
+
+    replay = chess.Board()
+    try:
+        for san in history:
+            replay.push_san(san)
+    except (ValueError, AssertionError):
+        return board
+
+    if _same_position(replay, board):
+        replay.halfmove_clock = board.halfmove_clock
+        replay.fullmove_number = board.fullmove_number
+        return replay
+    return board
+
+
+def _same_position(left, right):
+    return (
+        left.board_fen() == right.board_fen()
+        and left.turn == right.turn
+        and left.castling_rights == right.castling_rights
+        and left.ep_square == right.ep_square
+    )
+
+
 def _fallback_move(board, legal):
     moves = [chess.Move.from_uci(action) if isinstance(action, str) else action for action in legal]
     best_move = moves[0]
@@ -1197,13 +1240,9 @@ def _fallback_move(board, legal):
 
 
 def _time_budget(board, legal_count):
-    if legal_count <= 8:
-        return min(ENDGAME_TIME_SECONDS, MAX_TIME_SECONDS + 0.25)
     pieces = len(board.piece_map())
     if pieces <= 12:
         return ENDGAME_TIME_SECONDS
-    if board.fullmove_number <= 8:
-        return min(MAX_TIME_SECONDS, 1.05)
     return MAX_TIME_SECONDS
 
 
