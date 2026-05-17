@@ -24,6 +24,7 @@ const promotionChoices = document.getElementById("promotionChoices");
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"];
 const PIECE_SETS = ["chessnut", "spatial", "cburnett", "merida", "rhosgfx"];
+const PIECE_CODES = ["K", "Q", "R", "B", "N", "P"];
 const DEFAULT_PIECE_SET = "cburnett";
 const PIECE_SET_STORAGE_KEY = "boardarena_chess_piece_set";
 const PIECE_NAMES = { k: "王", q: "后", r: "车", b: "象", n: "马", p: "兵" };
@@ -41,6 +42,7 @@ let advanceTimer = 0;
 let advanceInFlight = false;
 let activeMoveAnimations = [];
 let stateVersion = 0;
+const piecePreloadPromises = new Map();
 
 async function api(path, payload) {
   let response;
@@ -234,7 +236,7 @@ function renderModeControls() {
 
 function renderBoard() {
   if (!data || !Array.isArray(data.pieces)) return;
-  boardEl.innerHTML = "";
+  const fragment = document.createDocumentFragment();
   const pieceMap = new Map(data.pieces.map((piece) => [piece.square, piece]));
   const legal = data.legal_actions || [];
   const legalFrom = new Set(legal.map((action) => action.slice(0, 2)));
@@ -282,9 +284,10 @@ function renderBoard() {
         button.appendChild(fileLabel);
       }
 
-      boardEl.appendChild(button);
+      fragment.appendChild(button);
     }
   }
+  boardEl.replaceChildren(fragment);
 }
 
 function renderLog() {
@@ -354,15 +357,17 @@ function isLightSquare(file, rank) {
 function createPieceImage(color, type, altText) {
   const img = document.createElement("img");
   img.className = "piece";
+  img.decoding = "async";
+  img.loading = "eager";
   img.src = pieceImagePath(color, type);
   img.alt = altText || "";
   img.draggable = false;
   return img;
 }
 
-function pieceImagePath(color, type) {
+function pieceImagePath(color, type, setName = pieceSet) {
   const prefix = color === "white" ? "w" : "b";
-  return `assets/pieces/${pieceSet}/${prefix}${type.toUpperCase()}.svg`;
+  return `assets/pieces/${setName}/${prefix}${type.toUpperCase()}.svg`;
 }
 
 function pieceAlt(piece) {
@@ -373,6 +378,46 @@ function pieceAlt(piece) {
 function renderPieceMarks() {
   whiteMark.src = pieceImagePath("white", "k");
   blackMark.src = pieceImagePath("black", "k");
+}
+
+function preloadPieceSet(setName = pieceSet) {
+  if (piecePreloadPromises.has(setName)) return piecePreloadPromises.get(setName);
+
+  const paths = [];
+  for (const prefix of ["w", "b"]) {
+    for (const pieceCode of PIECE_CODES) {
+      paths.push(`assets/pieces/${setName}/${prefix}${pieceCode}.svg`);
+    }
+  }
+
+  const promise = Promise.all(paths.map(preloadImage)).catch((error) => {
+    console.error(error);
+  });
+  piecePreloadPromises.set(setName, promise);
+  return promise;
+}
+
+function preloadImage(path) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.loading = "eager";
+    img.onload = resolve;
+    img.onerror = resolve;
+    img.src = path;
+    if (img.decode) img.decode().then(resolve).catch(resolve);
+  });
+}
+
+function preloadOtherPieceSets() {
+  const run = () => {
+    PIECE_SETS.filter((setName) => setName !== pieceSet).forEach((setName) => preloadPieceSet(setName));
+  };
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(run, { timeout: 2000 });
+  } else {
+    window.setTimeout(run, 800);
+  }
 }
 
 function loadSavedPieceSet() {
@@ -410,12 +455,14 @@ function setBot(nextBot) {
   if (mode === "human-bot") newGame();
 }
 
-function setPieceSet(nextPieceSet) {
+async function setPieceSet(nextPieceSet) {
   if (!PIECE_SETS.includes(nextPieceSet)) return;
   clearMoveAnimations();
   pieceSet = nextPieceSet;
   savePieceSet();
   renderModeControls();
+  await preloadPieceSet(pieceSet);
+  if (pieceSet !== nextPieceSet) return;
   renderPieceMarks();
   renderBoard();
 }
@@ -584,6 +631,11 @@ promotionPanel.addEventListener("click", (event) => {
   if (event.target === promotionPanel) promotionPanel.hidden = true;
 });
 
+const initialPieceLoad = preloadPieceSet(pieceSet);
 renderPieceMarks();
 renderModeControls();
-loadBotOptions().finally(newGame);
+loadBotOptions().finally(async () => {
+  await initialPieceLoad;
+  newGame();
+  preloadOtherPieceSets();
+});

@@ -300,7 +300,21 @@ class Handler(BaseHTTPRequestHandler):
         if not path.is_file():
             self.send_error(HTTPStatus.NOT_FOUND)
             return
-        self.send_bytes(path.read_bytes(), STATIC_TYPES.get(path.suffix, "application/octet-stream"))
+        stat = path.stat()
+        etag = f'W/"{stat.st_mtime_ns:x}-{stat.st_size:x}"'
+        cache_control = "public, max-age=31536000, immutable" if "/assets/" in path.as_posix() else "no-cache"
+        if self.headers.get("If-None-Match") == etag:
+            self.send_response(HTTPStatus.NOT_MODIFIED)
+            self.send_header("ETag", etag)
+            self.send_header("Cache-Control", cache_control)
+            self.end_headers()
+            return
+        self.send_bytes(
+            path.read_bytes(),
+            STATIC_TYPES.get(path.suffix, "application/octet-stream"),
+            cache_control=cache_control,
+            etag=etag,
+        )
 
     def send_json(self, payload: dict[str, Any]) -> None:
         self.send_bytes(json.dumps(payload, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
@@ -311,10 +325,21 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps({"error": message}, ensure_ascii=False).encode("utf-8"))
 
-    def send_bytes(self, payload: bytes, content_type: str) -> None:
+    def send_bytes(
+        self,
+        payload: bytes,
+        content_type: str,
+        *,
+        cache_control: str | None = None,
+        etag: str | None = None,
+    ) -> None:
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(payload)))
+        if cache_control is not None:
+            self.send_header("Cache-Control", cache_control)
+        if etag is not None:
+            self.send_header("ETag", etag)
         self.end_headers()
         self.wfile.write(payload)
 
