@@ -15,6 +15,7 @@ chess/
 ├── baseline/
 │   └── gpt5p5/
 │       ├── bot_easy.py
+│       ├── bot_medium.py
 │       └── bot_hard.py
 ├── doc/
 │   ├── README.md
@@ -79,11 +80,13 @@ http://127.0.0.1:8020/
 python BoardArena/chess/env/chess_web.py --port 8021
 ```
 
-可切换人人对战或人机对战。右侧下拉框可以选择 `/gpt5p5/bot_easy` 或 `/gpt5p5/bot_hard`，并可调整棋子移动动画速度。人机对战默认使用：
+可切换人人对战或人机对战。右侧下拉框可以选择 `/gpt5p5/bot_easy`、`/gpt5p5/bot_medium` 或 `/gpt5p5/bot_hard`，并可调整棋子移动动画速度和棋子样式。人机对战默认使用：
 
 ```text
 BoardArena/chess/baseline/gpt5p5/bot_hard.py
 ```
+
+`bot_medium.py` 是早期 hard bot 的改名版本；新的 `bot_hard.py` 使用更完整的传统搜索和手写评估。
 
 人类落子会先立即渲染并播放动画，随后前端再请求 `/api/advance` 让 bot 思考并落子。
 

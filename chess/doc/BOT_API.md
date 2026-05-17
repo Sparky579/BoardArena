@@ -110,6 +110,8 @@ result = battle_once(
 print(result)
 ```
 
+内置 baseline 包含 `bot_easy.py`、`bot_medium.py` 和 `bot_hard.py`。其中 `bot_medium.py` 是旧 hard 的保留版本，`bot_hard.py` 是更强的传统搜索版本。
+
 返回示例：
 
 ```python

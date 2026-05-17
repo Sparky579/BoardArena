@@ -24,6 +24,7 @@ from chess_env import DEFAULT_MAX_PLIES, ChessEnv, SystemBot, load_bot
 HERE = Path(__file__).resolve().parent
 DEFAULT_BOTS = {
     "/gpt5p5/bot_easy": HERE.parent / "baseline" / "gpt5p5" / "bot_easy.py",
+    "/gpt5p5/bot_medium": HERE.parent / "baseline" / "gpt5p5" / "bot_medium.py",
     "/gpt5p5/bot_hard": HERE.parent / "baseline" / "gpt5p5" / "bot_hard.py",
 }
 DEFAULT_BOT_ID = "/gpt5p5/bot_hard"
@@ -231,7 +232,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(session.view(session_id))
             return
         if parsed.path == "/api/bots":
-            self.send_json({"bots": sorted(self.server.bot_paths), "default": self.server.default_bot_id})
+            self.send_json({"bots": list(self.server.bot_paths), "default": self.server.default_bot_id})
             return
         self.send_error(HTTPStatus.NOT_FOUND)
 
