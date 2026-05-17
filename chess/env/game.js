@@ -36,6 +36,7 @@ let botId = "/gpt5p5/bot_hard";
 let advanceTimer = 0;
 let advanceInFlight = false;
 let activeMoveAnimations = [];
+let stateVersion = 0;
 
 async function api(path, payload) {
   let response;
@@ -83,12 +84,16 @@ async function loadBotOptions() {
 }
 
 async function newGame() {
+  const version = stateVersion + 1;
+  stateVersion = version;
   try {
     clearPendingAdvance();
     clearMoveAnimations();
+    advanceInFlight = false;
     selectedSquare = null;
     promotionPanel.hidden = true;
     const body = await api("/api/new", { mode, human_seat: humanSeat, bot: botId });
+    if (version !== stateVersion) return;
     const previous = data;
     sessionId = body.session;
     data = body;
@@ -97,11 +102,14 @@ async function newGame() {
     render(previous);
     queueBotAdvance(0);
   } catch (error) {
+    if (version !== stateVersion) return;
     showRequestError(error, { clear: true });
   }
 }
 
 async function sendMove(action) {
+  if (!canSendAction(action)) return;
+  const version = stateVersion;
   const previous = data;
   try {
     clearPendingAdvance();
@@ -114,11 +122,14 @@ async function sendMove(action) {
     }
     const animationDelay = optimistic ? getAnimationDuration() : 0;
     const body = await api("/api/action", { session: sessionId, action });
+    if (version !== stateVersion) return;
     if (animationDelay > 0) await sleep(animationDelay);
+    if (version !== stateVersion) return;
     data = body;
     render(null);
     queueBotAdvance(80);
   } catch (error) {
+    if (version !== stateVersion || isBenignTurnError(error)) return;
     if (previous) {
       data = previous;
       render(null);
@@ -129,18 +140,38 @@ async function sendMove(action) {
 
 async function advanceBot() {
   if (!data || !data.bot_turn || advanceInFlight) return;
+  const version = stateVersion;
+  const activeSession = sessionId;
   try {
     advanceInFlight = true;
     const previous = data;
-    const body = await api("/api/advance", { session: sessionId });
+    const body = await api("/api/advance", { session: activeSession });
+    if (version !== stateVersion || activeSession !== sessionId) return;
     data = body;
     render(previous);
     queueBotAdvance(getAnimationDuration() + 80);
   } catch (error) {
+    if (version !== stateVersion || activeSession !== sessionId) return;
     showRequestError(error, { clear: false });
   } finally {
-    advanceInFlight = false;
+    if (version === stateVersion && activeSession === sessionId) {
+      advanceInFlight = false;
+    }
   }
+}
+
+function canSendAction(action) {
+  return Boolean(
+    data
+    && data.human_turn
+    && !advanceInFlight
+    && Array.isArray(data.legal_actions)
+    && data.legal_actions.includes(action)
+  );
+}
+
+function isBenignTurnError(error) {
+  return error && typeof error.message === "string" && error.message.includes("现在不是人类玩家回合");
 }
 
 function showRequestError(error, options = {}) {
