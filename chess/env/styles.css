@@ -192,9 +192,13 @@ button,
 .piece {
   position: relative;
   z-index: 2;
-  font-size: clamp(32px, 8vw, 70px);
-  line-height: 1;
-  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.24);
+  display: block;
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.26));
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .piece.animating {
@@ -204,11 +208,9 @@ button,
 .piece-clone {
   position: fixed;
   z-index: 20;
-  display: grid;
-  place-items: center;
+  display: block;
   pointer-events: none;
-  line-height: 1;
-  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.24);
+  object-fit: contain;
 }
 
 .coord {
@@ -296,6 +298,10 @@ button,
   gap: 10px;
 }
 
+.player-title {
+  gap: 8px;
+}
+
 .player-card {
   display: flex;
   align-items: center;
@@ -319,12 +325,10 @@ button,
 
 .piece-mark {
   width: 28px;
-  font-size: 24px;
-  line-height: 1;
-}
-
-.piece-mark.black {
-  color: #111;
+  height: 28px;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.24));
 }
 
 .fen-panel p {
@@ -382,7 +386,11 @@ button,
   width: 48px;
   height: 48px;
   border-radius: 8px;
-  font-size: 30px;
+}
+
+.promotion-choices .piece {
+  width: 34px;
+  height: 34px;
 }
 
 @media (max-width: 860px) {

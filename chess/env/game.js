@@ -8,11 +8,14 @@ const whiteSeatBtn = document.getElementById("whiteSeatBtn");
 const blackSeatBtn = document.getElementById("blackSeatBtn");
 const botSelect = document.getElementById("botSelect");
 const animationSpeedSelect = document.getElementById("animationSpeedSelect");
+const pieceStyleSelect = document.getElementById("pieceStyleSelect");
 const orientationSelect = document.getElementById("orientationSelect");
 const whitePlayer = document.getElementById("whitePlayer");
 const blackPlayer = document.getElementById("blackPlayer");
 const whiteType = document.getElementById("whiteType");
 const blackType = document.getElementById("blackType");
+const whiteMark = document.getElementById("whiteMark");
+const blackMark = document.getElementById("blackMark");
 const fenText = document.getElementById("fenText");
 const moveLog = document.getElementById("moveLog");
 const promotionPanel = document.getElementById("promotionPanel");
@@ -20,11 +23,11 @@ const promotionChoices = document.getElementById("promotionChoices");
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"];
-const PIECES = {
-  white: { k: "♔", q: "♕", r: "♖", b: "♗", n: "♘", p: "♙" },
-  black: { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" },
-};
-const PROMOTION_LABELS = { q: "♕", r: "♖", b: "♗", n: "♘" };
+const PIECE_SETS = ["chessnut", "spatial", "cburnett", "merida", "rhosgfx"];
+const DEFAULT_PIECE_SET = "cburnett";
+const PIECE_SET_STORAGE_KEY = "boardarena_chess_piece_set";
+const PIECE_NAMES = { k: "王", q: "后", r: "车", b: "象", n: "马", p: "兵" };
+const PROMOTION_NAMES = { q: "后", r: "车", b: "象", n: "马" };
 
 let sessionId = "";
 let data = null;
@@ -33,6 +36,7 @@ let orientation = "white";
 let mode = "human-human";
 let humanSeat = 0;
 let botId = "/gpt5p5/bot_hard";
+let pieceSet = loadSavedPieceSet();
 let advanceTimer = 0;
 let advanceInFlight = false;
 let activeMoveAnimations = [];
@@ -207,6 +211,7 @@ function render(previousData = null) {
   whiteType.textContent = data.mode === "human-human" || data.human_seats.includes(0) ? "人类" : botName;
   blackType.textContent = data.mode === "human-human" || data.human_seats.includes(1) ? "人类" : botName;
   renderModeControls();
+  renderPieceMarks();
   renderBoard();
   renderLog();
   animateLastMove(previousData, data);
@@ -223,10 +228,12 @@ function renderModeControls() {
   blackSeatBtn.setAttribute("aria-pressed", String(humanSeat === 1));
   botSelect.value = botId;
   botSelect.disabled = mode !== "human-bot";
+  pieceStyleSelect.value = pieceSet;
   orientationSelect.value = orientation;
 }
 
 function renderBoard() {
+  if (!data || !Array.isArray(data.pieces)) return;
   boardEl.innerHTML = "";
   const pieceMap = new Map(data.pieces.map((piece) => [piece.square, piece]));
   const legal = data.legal_actions || [];
@@ -257,11 +264,9 @@ function renderBoard() {
 
       const piece = pieceMap.get(square);
       if (piece) {
-        const span = document.createElement("span");
-        span.className = "piece";
-        span.dataset.square = square;
-        span.textContent = PIECES[piece.color][piece.type];
-        button.appendChild(span);
+        const img = createPieceImage(piece.color, piece.type, `${pieceAlt(piece)} ${square}`);
+        img.dataset.square = square;
+        button.appendChild(img);
       }
 
       if (file === files[0]) {
@@ -331,7 +336,9 @@ function showPromotion(candidates) {
       const piece = action[4];
       const button = document.createElement("button");
       button.type = "button";
-      button.textContent = PROMOTION_LABELS[piece] || piece;
+      button.setAttribute("aria-label", `升变为${PROMOTION_NAMES[piece] || piece}`);
+      button.title = `升变为${PROMOTION_NAMES[piece] || piece}`;
+      button.appendChild(createPieceImage(data.turn, piece, PROMOTION_NAMES[piece] || piece));
       button.addEventListener("click", () => sendMove(action));
       promotionChoices.appendChild(button);
     });
@@ -342,6 +349,47 @@ function isLightSquare(file, rank) {
   const fileIndex = FILES.indexOf(file);
   const rankIndex = RANKS.indexOf(rank);
   return (fileIndex + rankIndex) % 2 === 1;
+}
+
+function createPieceImage(color, type, altText) {
+  const img = document.createElement("img");
+  img.className = "piece";
+  img.src = pieceImagePath(color, type);
+  img.alt = altText || "";
+  img.draggable = false;
+  return img;
+}
+
+function pieceImagePath(color, type) {
+  const prefix = color === "white" ? "w" : "b";
+  return `assets/pieces/${pieceSet}/${prefix}${type.toUpperCase()}.svg`;
+}
+
+function pieceAlt(piece) {
+  const colorName = piece.color === "white" ? "白方" : "黑方";
+  return `${colorName}${PIECE_NAMES[piece.type] || piece.type}`;
+}
+
+function renderPieceMarks() {
+  whiteMark.src = pieceImagePath("white", "k");
+  blackMark.src = pieceImagePath("black", "k");
+}
+
+function loadSavedPieceSet() {
+  try {
+    const saved = window.localStorage.getItem(PIECE_SET_STORAGE_KEY);
+    return PIECE_SETS.includes(saved) ? saved : DEFAULT_PIECE_SET;
+  } catch (error) {
+    return DEFAULT_PIECE_SET;
+  }
+}
+
+function savePieceSet() {
+  try {
+    window.localStorage.setItem(PIECE_SET_STORAGE_KEY, pieceSet);
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 function setMode(nextMode) {
@@ -360,6 +408,16 @@ function setBot(nextBot) {
   botId = nextBot;
   renderModeControls();
   if (mode === "human-bot") newGame();
+}
+
+function setPieceSet(nextPieceSet) {
+  if (!PIECE_SETS.includes(nextPieceSet)) return;
+  clearMoveAnimations();
+  pieceSet = nextPieceSet;
+  savePieceSet();
+  renderModeControls();
+  renderPieceMarks();
+  renderBoard();
 }
 
 function setOrientation(nextOrientation) {
@@ -462,12 +520,12 @@ function animateLastMove(previousData, nextData) {
 
   clone.classList.remove("animating");
   clone.classList.add("piece-clone");
+  clone.removeAttribute("data-square");
   clone.style.left = `${startLeft}px`;
   clone.style.top = `${startTop}px`;
   clone.style.width = `${toRect.width}px`;
   clone.style.height = `${toRect.height}px`;
-  clone.style.fontSize = style.fontSize;
-  clone.style.color = style.color;
+  clone.style.filter = style.filter;
   document.body.appendChild(clone);
   toPiece.classList.add("animating");
 
@@ -516,6 +574,7 @@ humanBotBtn.addEventListener("click", () => setMode("human-bot"));
 whiteSeatBtn.addEventListener("click", () => setHumanSeat(0));
 blackSeatBtn.addEventListener("click", () => setHumanSeat(1));
 botSelect.addEventListener("change", () => setBot(botSelect.value));
+pieceStyleSelect.addEventListener("change", () => setPieceSet(pieceStyleSelect.value));
 orientationSelect.addEventListener("change", () => setOrientation(orientationSelect.value));
 newGameBtn.addEventListener("click", newGame);
 flipBtn.addEventListener("click", () => {
@@ -525,4 +584,6 @@ promotionPanel.addEventListener("click", (event) => {
   if (event.target === promotionPanel) promotionPanel.hidden = true;
 });
 
+renderPieceMarks();
+renderModeControls();
 loadBotOptions().finally(newGame);

@@ -59,6 +59,17 @@
       </div>
 
       <div class="control-group">
+        <span class="control-label">棋子样式</span>
+        <select id="pieceStyleSelect" class="select-control" aria-label="棋子样式">
+          <option value="chessnut">chessnut</option>
+          <option value="spatial">spatial</option>
+          <option value="cburnett" selected>cburnett</option>
+          <option value="merida">merida</option>
+          <option value="rhosgfx">rhosgfx</option>
+        </select>
+      </div>
+
+      <div class="control-group">
         <span class="control-label">棋盘方向</span>
         <select id="orientationSelect" class="select-control" aria-label="棋盘方向">
           <option value="white" selected>白方视角</option>
@@ -69,14 +80,14 @@
       <div class="players">
         <article id="whitePlayer" class="player-card">
           <div class="player-title">
-            <span class="piece-mark">♔</span>
+            <img id="whiteMark" class="piece-mark" alt="" aria-hidden="true">
             <strong>白方</strong>
           </div>
           <span id="whiteType">人类</span>
         </article>
         <article id="blackPlayer" class="player-card">
           <div class="player-title">
-            <span class="piece-mark black">♚</span>
+            <img id="blackMark" class="piece-mark" alt="" aria-hidden="true">
             <strong>黑方</strong>
           </div>
           <span id="blackType">人类</span>

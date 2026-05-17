@@ -31,6 +31,7 @@ STATIC_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
     ".css": "text/css; charset=utf-8",
+    ".svg": "image/svg+xml; charset=utf-8",
 }
 
 
@@ -217,6 +218,9 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path in ("/game.js", "/styles.css"):
             self.send_static(parsed.path.lstrip("/"))
             return
+        if parsed.path.startswith("/assets/"):
+            self.send_static(parsed.path.lstrip("/"))
+            return
         if parsed.path == "/api/state":
             qs = parse_qs(parsed.query)
             session_id = qs.get("session", [""])[0]
@@ -286,8 +290,13 @@ class Handler(BaseHTTPRequestHandler):
         return json.loads(raw.decode("utf-8"))
 
     def send_static(self, filename: str) -> None:
-        path = HERE / filename
-        if not path.exists():
+        path = (HERE / filename).resolve()
+        try:
+            path.relative_to(HERE)
+        except ValueError:
+            self.send_error(HTTPStatus.NOT_FOUND)
+            return
+        if not path.is_file():
             self.send_error(HTTPStatus.NOT_FOUND)
             return
         self.send_bytes(path.read_bytes(), STATIC_TYPES.get(path.suffix, "application/octet-stream"))
