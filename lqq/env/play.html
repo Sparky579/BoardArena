@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BoardArena LQQ</title>
+  <link rel="stylesheet" href="play.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="board-area">
+      <div class="topbar">
+        <div>
+          <h1>Luqiangqi</h1>
+          <p id="status">Starting</p>
+        </div>
+        <button id="newGame" type="button">New Game</button>
+      </div>
+      <div id="board" class="board" aria-label="Luqiangqi board"></div>
+    </section>
+
+    <aside class="panel">
+      <label>
+        Mode
+        <select id="mode">
+          <option value="human-human">Human vs human</option>
+          <option value="human-bot">Human vs bot</option>
+        </select>
+      </label>
+      <label>
+        Human seat
+        <select id="seat">
+          <option value="0">Player 1</option>
+          <option value="1">Player 2</option>
+        </select>
+      </label>
+      <label>
+        Bot
+        <select id="bot"></select>
+      </label>
+
+      <div class="stats">
+        <div><strong>Player 1</strong><span id="p0"></span></div>
+        <div><strong>Player 2</strong><span id="p1"></span></div>
+      </div>
+
+      <label>
+        Wall action
+        <select id="wallAction"></select>
+      </label>
+      <button id="placeWall" type="button">Place Wall</button>
+
+      <ol id="log" class="log"></ol>
+    </aside>
+  </main>
+  <script src="play.js"></script>
+</body>
+</html>

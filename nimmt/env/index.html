@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BoardArena nimmt</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="table">
+      <div class="topbar">
+        <div>
+          <h1>6 nimmt!</h1>
+          <p id="status">Starting</p>
+        </div>
+        <button id="newGame" type="button">New Game</button>
+      </div>
+      <div id="rows" class="rows"></div>
+      <div id="hand" class="hand"></div>
+    </section>
+
+    <aside class="panel">
+      <label>
+        Mode
+        <select id="mode">
+          <option value="human-human">Human vs human</option>
+          <option value="human-bot">Human vs bots</option>
+        </select>
+      </label>
+      <label>
+        Players
+        <select id="players">
+          <option>2</option>
+          <option>3</option>
+          <option selected>4</option>
+          <option>5</option>
+          <option>6</option>
+        </select>
+      </label>
+      <label>
+        Human seat
+        <select id="seat"></select>
+      </label>
+      <label>
+        Bot
+        <select id="bot"></select>
+      </label>
+
+      <div id="scores" class="scores"></div>
+      <ol id="log" class="log"></ol>
+    </aside>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

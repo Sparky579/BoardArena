@@ -7,6 +7,10 @@ venv/
 env/
 !chess/env/
 !chess/env/**
+!lqq/env/
+!lqq/env/**
+!nimmt/env/
+!nimmt/env/**
 
 **/__pycache__/
 **/__pycache__/**
