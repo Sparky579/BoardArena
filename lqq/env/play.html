@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BoardArena LQQ</title>
+  <title>BoardArena LQQ Play</title>
   <link rel="stylesheet" href="play.css">
 </head>
 <body>
@@ -20,35 +20,39 @@
     </section>
 
     <aside class="panel">
-      <label>
-        Mode
+      <div class="control">
+        <span>Mode</span>
         <select id="mode">
-          <option value="human-human">Human vs human</option>
           <option value="human-bot">Human vs bot</option>
+          <option value="human-human">Human vs human</option>
         </select>
-      </label>
-      <label>
-        Human seat
+      </div>
+      <div class="control">
+        <span>Human seat</span>
         <select id="seat">
           <option value="0">Player 1</option>
           <option value="1">Player 2</option>
         </select>
-      </label>
-      <label>
-        Bot
+      </div>
+      <div class="control">
+        <span>Bot</span>
         <select id="bot"></select>
-      </label>
+      </div>
 
       <div class="stats">
         <div><strong>Player 1</strong><span id="p0"></span></div>
         <div><strong>Player 2</strong><span id="p1"></span></div>
       </div>
 
-      <label>
-        Wall action
-        <select id="wallAction"></select>
-      </label>
-      <button id="placeWall" type="button">Place Wall</button>
+      <div class="control">
+        <span>Wall direction</span>
+        <div class="segmented" role="group" aria-label="Wall direction">
+          <button id="wallH" class="selected" type="button" aria-pressed="true">Horizontal</button>
+          <button id="wallV" type="button" aria-pressed="false">Vertical</button>
+        </div>
+      </div>
+
+      <div class="hint">Click highlighted squares to move. Click board gaps to place walls.</div>
 
       <ol id="log" class="log"></ol>
     </aside>

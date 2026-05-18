@@ -4,14 +4,16 @@ const statusEl = document.getElementById("status");
 const modeEl = document.getElementById("mode");
 const seatEl = document.getElementById("seat");
 const botEl = document.getElementById("bot");
-const wallActionEl = document.getElementById("wallAction");
-const placeWallEl = document.getElementById("placeWall");
+const wallHEl = document.getElementById("wallH");
+const wallVEl = document.getElementById("wallV");
 const newGameEl = document.getElementById("newGame");
 const logEl = document.getElementById("log");
 const p0El = document.getElementById("p0");
 const p1El = document.getElementById("p1");
 
 let state = null;
+let busy = false;
+let selectedWallDirection = "H";
 const moveActions = {
   MOVE_UP: [-1, 0],
   MOVE_DOWN: [1, 0],
@@ -42,26 +44,45 @@ async function loadBots() {
 }
 
 async function newGame() {
-  state = await api("/api/new", {
-    mode: modeEl.value,
-    human_seat: Number(seatEl.value),
-    bot: botEl.value,
+  await runAction(async () => {
+    state = await api("/api/new", {
+      mode: modeEl.value,
+      human_seat: Number(seatEl.value),
+      bot: botEl.value,
+    });
+    render();
+    await advanceIfNeeded();
   });
-  render();
-  await advanceIfNeeded();
 }
 
 async function submitAction(action) {
   if (!state || !state.human_turn) return;
-  state = await api("/api/action", { session: state.session, action });
-  render();
-  await advanceIfNeeded();
+  await runAction(async () => {
+    state = await api("/api/action", { session: state.session, action });
+    render();
+    await advanceIfNeeded();
+  });
 }
 
 async function advanceIfNeeded() {
   while (state && state.bot_turn) {
+    renderBusy("Bot is thinking...");
     state = await api("/api/advance", { session: state.session });
     render();
+  }
+}
+
+async function runAction(callback) {
+  if (busy) return;
+  busy = true;
+  renderControls();
+  try {
+    await callback();
+  } catch (error) {
+    statusEl.textContent = error.message;
+  } finally {
+    busy = false;
+    renderControls();
   }
 }
 
@@ -70,55 +91,203 @@ function render() {
   p0El.textContent = `${state.positions[0][0]},${state.positions[0][1]} | walls ${state.walls_remaining[0]}`;
   p1El.textContent = `${state.positions[1][0]},${state.positions[1][1]} | walls ${state.walls_remaining[1]}`;
   renderBoard();
-  renderWalls();
+  renderControls();
   renderLog();
+}
+
+function renderBusy(message) {
+  statusEl.textContent = message;
+  renderControls();
 }
 
 function renderBoard() {
   boardEl.innerHTML = "";
+  const placedEdges = buildPlacedEdges();
   const legalMoves = new Map();
   state.legal_actions.forEach((action) => {
     if (!moveActions[action]) return;
-    const [dr, dc] = moveActions[action];
-    const [row, col] = state.positions[state.actor];
-    legalMoves.set(`${row + dr},${col + dc}`, action);
+    const target = moveTarget(action, placedEdges);
+    if (target) legalMoves.set(`${target.row},${target.col}`, action);
   });
+  const legalWalls = new Set(state.legal_actions.filter((action) => action.startsWith("WALL_")));
+  const placedOrigins = new Set(state.walls.map((wall) => wallAction(wall.dir, wall.row, wall.col)));
 
-  for (let row = 0; row < SIZE; row += 1) {
-    for (let col = 0; col < SIZE; col += 1) {
-      const cell = document.createElement("button");
-      cell.type = "button";
-      cell.className = "cell";
-      if (row === 0) cell.classList.add("goal0");
-      if (row === SIZE - 1) cell.classList.add("goal1");
-
-      const player = state.positions.findIndex(([r, c]) => r === row && c === col);
-      if (player >= 0) {
-        const pawn = document.createElement("span");
-        pawn.className = `pawn p${player}`;
-        cell.appendChild(pawn);
+  for (let gridRow = 0; gridRow < SIZE * 2 - 1; gridRow += 1) {
+    for (let gridCol = 0; gridCol < SIZE * 2 - 1; gridCol += 1) {
+      if (gridRow % 2 === 0 && gridCol % 2 === 0) {
+        boardEl.appendChild(createCell(gridRow / 2, gridCol / 2, legalMoves));
+      } else if (gridRow % 2 === 1 && gridCol % 2 === 0) {
+        boardEl.appendChild(createWallSlot("H", (gridRow - 1) / 2, gridCol / 2, legalWalls, placedEdges));
+      } else if (gridRow % 2 === 0 && gridCol % 2 === 1) {
+        boardEl.appendChild(createWallSlot("V", gridRow / 2, (gridCol - 1) / 2, legalWalls, placedEdges));
+      } else {
+        boardEl.appendChild(createJunction((gridRow - 1) / 2, (gridCol - 1) / 2, legalWalls, placedOrigins));
       }
-
-      const move = legalMoves.get(`${row},${col}`);
-      if (move) {
-        cell.classList.add("legal");
-        cell.addEventListener("click", () => submitAction(move));
-      }
-      boardEl.appendChild(cell);
     }
   }
 }
 
-function renderWalls() {
-  const wallActions = state.legal_actions.filter((action) => action.startsWith("WALL_"));
-  wallActionEl.innerHTML = "";
-  wallActions.forEach((action) => {
-    const option = document.createElement("option");
-    option.value = action;
-    option.textContent = action;
-    wallActionEl.appendChild(option);
+function createCell(row, col, legalMoves) {
+  const cell = document.createElement("button");
+  cell.type = "button";
+  cell.className = "cell";
+  cell.ariaLabel = `cell ${col + 1},${row + 1}`;
+  if (row === 0) cell.classList.add("goal0");
+  if (row === SIZE - 1) cell.classList.add("goal1");
+
+  const player = state.positions.findIndex(([r, c]) => r === row && c === col);
+  if (player >= 0) {
+    const pawn = document.createElement("span");
+    pawn.className = `pawn p${player}`;
+    cell.appendChild(pawn);
+  }
+
+  const move = legalMoves.get(`${row},${col}`);
+  if (move) {
+    cell.classList.add("legal");
+    cell.addEventListener("click", () => submitAction(move));
+  }
+  return cell;
+}
+
+function createWallSlot(dir, row, col, legalWalls, placedEdges) {
+  const slot = document.createElement("button");
+  slot.type = "button";
+  slot.className = `wall-slot ${dir === "H" ? "horizontal" : "vertical"}`;
+  slot.dataset.dir = dir;
+  slot.dataset.row = String(row);
+  slot.dataset.col = String(col);
+  slot.ariaLabel = `${dir === "H" ? "horizontal" : "vertical"} wall slot ${row + 1},${col + 1}`;
+
+  if (placedEdges.has(edgeKey(dir, row, col))) {
+    slot.classList.add("placed");
+  }
+
+  const origin = normalizeOrigin(dir, row, col);
+  const action = wallAction(dir, origin.row, origin.col);
+  if (legalWalls.has(action)) {
+    slot.classList.add("placeable");
+    slot.addEventListener("mouseenter", () => previewWall(dir, origin.row, origin.col, true));
+    slot.addEventListener("mouseleave", () => previewWall(dir, origin.row, origin.col, false));
+    slot.addEventListener("click", () => submitAction(action));
+  }
+  return slot;
+}
+
+function createJunction(row, col, legalWalls, placedOrigins) {
+  const junction = document.createElement("button");
+  junction.type = "button";
+  junction.className = "junction";
+  junction.dataset.row = String(row);
+  junction.dataset.col = String(col);
+  junction.ariaLabel = `wall junction ${row + 1},${col + 1}`;
+
+  const horizontal = wallAction("H", row, col);
+  const vertical = wallAction("V", row, col);
+  if (placedOrigins.has(horizontal) || placedOrigins.has(vertical)) {
+    junction.classList.add("placed");
+  }
+
+  const action = wallAction(selectedWallDirection, row, col);
+  if (legalWalls.has(action)) {
+    junction.classList.add("placeable");
+    junction.addEventListener("mouseenter", () => previewWall(selectedWallDirection, row, col, true));
+    junction.addEventListener("mouseleave", () => previewWall(selectedWallDirection, row, col, false));
+    junction.addEventListener("click", () => submitAction(action));
+  }
+  return junction;
+}
+
+function buildPlacedEdges() {
+  const edges = new Set();
+  state.walls.forEach((wall) => {
+    wallEdges(wall.dir, wall.row, wall.col).forEach((edge) => edges.add(edge));
   });
-  placeWallEl.disabled = wallActions.length === 0;
+  return edges;
+}
+
+function moveTarget(action, placedEdges) {
+  const delta = moveActions[action];
+  if (!delta) return null;
+  const [dr, dc] = delta;
+  const actor = state.actor;
+  const opponent = 1 - actor;
+  const [row, col] = state.positions[actor];
+  const [oppRow, oppCol] = state.positions[opponent];
+  const nextRow = row + dr;
+  const nextCol = col + dc;
+
+  if (!inBounds(nextRow, nextCol)) return null;
+  if (hasWallBetween(row, col, nextRow, nextCol, placedEdges)) return null;
+  if (nextRow !== oppRow || nextCol !== oppCol) {
+    return { row: nextRow, col: nextCol };
+  }
+
+  const jumpRow = oppRow + dr;
+  const jumpCol = oppCol + dc;
+  if (!inBounds(jumpRow, jumpCol)) return null;
+  if (hasWallBetween(oppRow, oppCol, jumpRow, jumpCol, placedEdges)) return null;
+  return { row: jumpRow, col: jumpCol };
+}
+
+function inBounds(row, col) {
+  return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+}
+
+function hasWallBetween(fromRow, fromCol, toRow, toCol, placedEdges) {
+  if (fromRow === toRow) {
+    return placedEdges.has(edgeKey("V", fromRow, Math.min(fromCol, toCol)));
+  }
+  if (fromCol === toCol) {
+    return placedEdges.has(edgeKey("H", Math.min(fromRow, toRow), fromCol));
+  }
+  return true;
+}
+
+function wallEdges(dir, row, col) {
+  if (dir === "H") {
+    return [edgeKey("H", row, col), edgeKey("H", row, col + 1)];
+  }
+  return [edgeKey("V", row, col), edgeKey("V", row + 1, col)];
+}
+
+function normalizeOrigin(dir, row, col) {
+  if (dir === "H") return { row, col: Math.min(col, SIZE - 2) };
+  return { row: Math.min(row, SIZE - 2), col };
+}
+
+function edgeKey(dir, row, col) {
+  return `${dir}:${row}:${col}`;
+}
+
+function wallAction(dir, row, col) {
+  return `WALL_${dir}_${row}_${col}`;
+}
+
+function previewWall(dir, row, col, enabled) {
+  const method = enabled ? "add" : "remove";
+  wallEdges(dir, row, col).forEach((edge) => {
+    const [edgeDir, edgeRow, edgeCol] = edge.split(":");
+    const selector = `.wall-slot[data-dir="${edgeDir}"][data-row="${edgeRow}"][data-col="${edgeCol}"]`;
+    const element = boardEl.querySelector(selector);
+    if (element) element.classList[method]("preview");
+  });
+  const junction = boardEl.querySelector(`.junction[data-row="${row}"][data-col="${col}"]`);
+  if (junction) junction.classList[method]("preview");
+}
+
+function renderControls() {
+  const disabled = busy || !state || state.bot_turn;
+  newGameEl.disabled = busy;
+  modeEl.disabled = busy;
+  seatEl.disabled = busy || modeEl.value === "human-human";
+  botEl.disabled = busy || modeEl.value === "human-human";
+  wallHEl.disabled = disabled;
+  wallVEl.disabled = disabled;
+  wallHEl.classList.toggle("selected", selectedWallDirection === "H");
+  wallVEl.classList.toggle("selected", selectedWallDirection === "V");
+  wallHEl.setAttribute("aria-pressed", String(selectedWallDirection === "H"));
+  wallVEl.setAttribute("aria-pressed", String(selectedWallDirection === "V"));
 }
 
 function renderLog() {
@@ -130,14 +299,25 @@ function renderLog() {
   });
 }
 
-placeWallEl.addEventListener("click", () => {
-  if (wallActionEl.value) submitAction(wallActionEl.value);
+wallHEl.addEventListener("click", () => {
+  selectedWallDirection = "H";
+  if (state) render();
+  else renderControls();
+});
+wallVEl.addEventListener("click", () => {
+  selectedWallDirection = "V";
+  if (state) render();
+  else renderControls();
 });
 newGameEl.addEventListener("click", newGame);
 modeEl.addEventListener("change", () => {
-  seatEl.disabled = modeEl.value === "human-human";
+  renderControls();
+});
+boardEl.addEventListener("pointerleave", () => {
+  boardEl.querySelectorAll(".preview").forEach((element) => element.classList.remove("preview"));
 });
 
 loadBots().then(newGame).catch((error) => {
   statusEl.textContent = error.message;
 });
+renderControls();

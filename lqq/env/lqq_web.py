@@ -20,10 +20,8 @@ from lqq_env import DEFAULT_TURN_LIMIT, LqqEnv, SystemBot, load_bot
 
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_BOTS = {
-    "/baseline/bot_greedy": HERE.parent / "baseline" / "bot_greedy.py",
-}
 DEFAULT_BOT_ID = "/baseline/bot_greedy"
+BASELINE_DIR = HERE.parent / "baseline"
 STATIC_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
@@ -288,21 +286,50 @@ def format_action(actor: int, action: str, source: str) -> str:
     return f"{who}: {action}"
 
 
+def discover_bot_paths() -> dict[str, Path]:
+    bot_paths: dict[str, Path] = {}
+    if not BASELINE_DIR.is_dir():
+        return bot_paths
+
+    for path in sorted(BASELINE_DIR.glob("*.py")):
+        if path.name.startswith("_"):
+            continue
+        bot_paths[bot_id_for_path(path)] = path
+
+    for path in sorted(BASELINE_DIR.rglob("bot.py")):
+        if "__pycache__" in path.parts:
+            continue
+        bot_paths[bot_id_for_path(path)] = path
+
+    return bot_paths
+
+
+def bot_id_for_path(path: Path) -> str:
+    try:
+        relative = path.resolve().relative_to(HERE.parent)
+        return f"/{relative.with_suffix('').as_posix()}"
+    except ValueError:
+        return f"/custom/{path.stem}"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the BoardArena Luqiangqi browser UI")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8030)
-    parser.add_argument("--bot", type=Path, default=None, help="optional path overriding /baseline/bot_greedy")
-    parser.add_argument("--default-bot", choices=tuple(DEFAULT_BOTS), default=DEFAULT_BOT_ID)
+    parser.add_argument("--bot", type=Path, default=None, help="optional bot file to add to the browser list")
+    parser.add_argument("--default-bot", default=DEFAULT_BOT_ID)
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--turn-limit", type=int, default=DEFAULT_TURN_LIMIT)
     parser.add_argument("--no-open", action="store_true")
     args = parser.parse_args()
 
-    bot_paths = dict(DEFAULT_BOTS)
+    bot_paths = discover_bot_paths()
     if args.bot is not None:
-        bot_paths["/baseline/bot_greedy"] = args.bot
-    server, port = bind_server(args, bot_paths)
+        bot_paths[bot_id_for_path(args.bot)] = args.bot
+    if not bot_paths:
+        raise FileNotFoundError(f"no bot files found under {BASELINE_DIR}")
+    default_bot_id = args.default_bot if args.default_bot in bot_paths else next(iter(bot_paths))
+    server, port = bind_server(args, bot_paths, default_bot_id)
     url = f"http://{args.host}:{port}/"
     print(f"BoardArena lqq UI: {url}")
     if not args.no_open:
@@ -311,14 +338,14 @@ def main() -> int:
     return 0
 
 
-def bind_server(args: argparse.Namespace, bot_paths: dict[str, Path]) -> tuple[LqqServer, int]:
+def bind_server(args: argparse.Namespace, bot_paths: dict[str, Path], default_bot_id: str) -> tuple[LqqServer, int]:
     for port in range(args.port, args.port + 20):
         try:
             return (
                 LqqServer(
                     (args.host, port),
                     bot_paths=bot_paths,
-                    default_bot_id=args.default_bot,
+                    default_bot_id=default_bot_id,
                     seed=args.seed,
                     turn_limit=args.turn_limit,
                 ),
