@@ -11,6 +11,8 @@ env/
 !lqq/env/**
 !nimmt/env/
 !nimmt/env/**
+!skull/env/
+!skull/env/**
 
 **/__pycache__/
 **/__pycache__/**

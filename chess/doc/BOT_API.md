@@ -28,6 +28,7 @@ class Bot:
 - 动作使用 UCI 格式，例如 `e2e4`、`e1g1`、`e7e8q`。
 - 国际象棋是完全信息游戏，bot 可以看到完整棋盘、FEN、合法动作和历史 SAN。
 - 如果 bot 抛异常或返回非法动作，本局会以 `bot_exception` 或 `invalid_action` 结束，并判该 bot 负。
+- 如果设置了单步决策限时，且 bot 的一次 `choose_action(state)` 调用超时，本局会以 `timeout` 结束，并判该 bot 负。
 
 ## state 字段
 
@@ -106,6 +107,7 @@ result = battle_once(
     seat=0,
     seed=1,
     keep_log=True,
+    decision_timeout=2.0,
 )
 print(result)
 ```
@@ -139,6 +141,7 @@ summary = battle_many(
     games=100,
     seed=1,
     alternate_seats=True,
+    decision_timeout=2.0,
 )
 print(summary)
 ```
@@ -152,7 +155,7 @@ print(summary)
 - `developer_wins`：开发者 bot 胜场。
 - `developer_losses`：开发者 bot 未胜场，包含和棋。
 - `developer_win_rate`：开发者 bot 胜率。
-- `statuses`：终局状态统计。
+- `statuses`：终局状态统计，包含 `timeout`、`invalid_action`、`bot_exception` 等异常结束状态。
 - `game_ids`：仅当 `keep_logs=True` 时返回可查询日志的 id。
 
 ### 查询对战日志
@@ -172,6 +175,7 @@ for item in log:
 - `T<t>:P<p>:MOVE:<uci>:SAN:<san>:FEN:<fen>`：玩家走子。
 - `T<t>:ERR:P<p>:INVALID:<action>`：玩家返回非法动作。
 - `T<t>:ERR:P<p>:EXCEPTION:<type>`：玩家 bot 抛异常。
+- `T<t>:ERR:P<p>:TIMEOUT`：玩家 bot 单步决策超时。
 - `END:<status>:WINNER:<p>:RESULT:<result>:PLIES:<plies>:FEN:<fen>`：一局结束。
 
 ## 命令行接口
@@ -192,6 +196,12 @@ python env/chess_env.py battle --bot baseline/gpt5p5/bot_hard.py --games 1 --sea
 
 ```bash
 python env/chess_env.py battle --bot baseline/gpt5p5/bot_easy.py --games 100 --seed 1
+```
+
+限制每次 `choose_action(state)` 最多思考 2 秒，超时自动判负：
+
+```bash
+python env/chess_env.py battle --bot baseline/gpt5p5/bot_easy.py --games 100 --seed 1 --decision-timeout 2
 ```
 
 默认批量对战会轮换开发者 bot 的座位，减少先手影响。如需固定开发者 bot 在 `seat=0`：

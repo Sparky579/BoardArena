@@ -47,6 +47,7 @@ class Bot:
 - 返回值必须在 `state["legal_actions"]` 里。
 - bot 只能看到自己的手牌和公共信息，看不到其他玩家暗牌内容。
 - 如果 bot 抛异常或返回非法动作，本局会以 `bot_exception` 或 `invalid_action` 结束，并判该 bot 负。
+- 如果设置了单步决策限时，且 bot 的一次 `choose_action(state)` 调用超时，本局会以 `timeout` 结束，并判该 bot 负。
 
 ## state 字段
 
@@ -94,6 +95,7 @@ result = battle_once(
     seat=0,
     seed=1,
     keep_log=True,
+    decision_timeout=2.0,
 )
 print(result)
 ```
@@ -126,6 +128,7 @@ summary = battle_many(
     seed=1,
     alternate_seats=True,
     keep_logs=False,
+    decision_timeout=2.0,
 )
 print(summary)
 ```
@@ -138,7 +141,7 @@ print(summary)
 - `developer_wins`：开发者 bot 胜场。
 - `developer_losses`：开发者 bot 负场。
 - `developer_win_rate`：开发者 bot 胜率。
-- `statuses`：`ok`、`turn_limit`、`invalid_action`、`bot_exception` 等状态统计。
+- `statuses`：`ok`、`turn_limit`、`invalid_action`、`bot_exception`、`timeout` 等状态统计。
 - `game_ids`：仅当 `keep_logs=True` 时返回可查询日志的 id。
 
 ### 查询对战日志
@@ -164,6 +167,7 @@ for item in log:
 - `T<t>:X:P<p>:F` / `S`：玩家 `p` 随机损失一张花/骷髅。
 - `T<t>:ERR:P<p>:INVALID:<action>`：玩家返回非法动作。
 - `T<t>:ERR:P<p>:EXCEPTION:<type>`：玩家 bot 抛异常。
+- `T<t>:ERR:P<p>:TIMEOUT`：玩家 bot 单步决策超时。
 - `END:<status>:WINNER:<p>:SCORES:<scores>`：一局结束。
 
 ## 命令行接口
@@ -186,6 +190,12 @@ python .\skull_multi.py battle --bot .\bot.py --players 2 --games 1 --seat 0 --s
 python .\skull_multi.py battle --bot .\bot.py --players 2 --games 1000 --seed 1
 ```
 
+限制每次 `choose_action(state)` 最多思考 2 秒，超时自动判负：
+
+```powershell
+python .\skull_multi.py battle --bot .\bot.py --players 2 --games 100 --seed 1 --decision-timeout 2
+```
+
 多人局：
 
 ```powershell
@@ -197,4 +207,3 @@ python .\skull_multi.py battle --bot .\bot.py --players 6 --games 100 --seed 1
 ```powershell
 python .\skull_multi.py battle --bot .\bot.py --players 4 --games 100 --fixed-seat
 ```
-

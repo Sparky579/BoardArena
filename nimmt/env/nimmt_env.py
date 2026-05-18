@@ -13,8 +13,10 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import queue
 import random
 import sys
+import threading
 import traceback
 import uuid
 from collections import Counter
@@ -34,6 +36,10 @@ _MATCH_LOGS: dict[str, list[str]] = {}
 
 class IllegalActionError(ValueError):
     """Raised when one or more simultaneous actions are illegal."""
+
+
+class BotTimeoutError(TimeoutError):
+    """Raised when a bot does not return an action before the deadline."""
 
 
 @dataclass
@@ -353,6 +359,39 @@ class CallableBot:
         self.name = name
 
 
+def choose_action_with_timeout(
+    bot: BotLike,
+    state: dict[str, Any],
+    decision_timeout: float | None,
+) -> str:
+    if decision_timeout is None:
+        return bot.choose_action(state)
+
+    result_queue: queue.Queue[tuple[bool, Any]] = queue.Queue(maxsize=1)
+
+    def target() -> None:
+        try:
+            result_queue.put((True, bot.choose_action(state)))
+        except BaseException as exc:  # noqa: BLE001 - preserve existing bot failure semantics.
+            result_queue.put((False, exc))
+
+    thread = threading.Thread(target=target, daemon=True)
+    thread.start()
+    thread.join(decision_timeout)
+    if thread.is_alive():
+        raise BotTimeoutError(f"choose_action exceeded {decision_timeout:g} seconds")
+
+    ok, value = result_queue.get_nowait()
+    if ok:
+        return value
+    raise value
+
+
+def validate_decision_timeout(decision_timeout: float | None) -> None:
+    if decision_timeout is not None and decision_timeout <= 0:
+        raise ValueError("decision_timeout must be positive seconds or None")
+
+
 def load_bot(bot_path: str | Path) -> BotLike:
     path = Path(bot_path).resolve()
     if not path.exists():
@@ -386,9 +425,11 @@ def run_match(
     seed: int | None = None,
     keep_log: bool = True,
     developer_seat: int | None = None,
+    decision_timeout: float | None = None,
 ) -> dict[str, Any]:
     if not MIN_PLAYERS <= len(bots) <= MAX_PLAYERS:
         raise ValueError(f"bots length must be between {MIN_PLAYERS} and {MAX_PLAYERS}")
+    validate_decision_timeout(decision_timeout)
 
     game_seed = seed if seed is not None else random.randrange(1 << 30)
     rng = random.Random(game_seed)
@@ -416,7 +457,14 @@ def run_match(
                 return _result(game_id, state, bot_names, developer_seat, status, error, keep_log, log)
 
             try:
-                action = bot.choose_action(public)
+                action = choose_action_with_timeout(bot, public, decision_timeout)
+            except BotTimeoutError as exc:
+                status = "timeout"
+                error = f"player {player} timed out: {exc}"
+                log.append(f"T{state.turn}:ERR:P{player}:TIMEOUT")
+                return _forfeit_result(
+                    game_id, state, bot_names, player, developer_seat, status, error, keep_log, log
+                )
             except Exception as exc:  # noqa: BLE001 - bot failures are match results.
                 status = "bot_exception"
                 error = f"{type(exc).__name__}: {exc}"
@@ -455,11 +503,13 @@ def battle_once(
     seat: int = 0,
     seed: int | None = None,
     keep_log: bool = True,
+    decision_timeout: float | None = None,
 ) -> dict[str, Any]:
     if not MIN_PLAYERS <= players <= MAX_PLAYERS:
         raise ValueError(f"players must be between {MIN_PLAYERS} and {MAX_PLAYERS}")
     if not 0 <= seat < players:
         raise ValueError("seat must be within player range")
+    validate_decision_timeout(decision_timeout)
 
     developer_bot = load_bot(bot_path)
     game_seed = seed if seed is not None else random.randrange(1 << 30)
@@ -468,7 +518,13 @@ def battle_once(
         for player in range(players)
     ]
     bots[seat] = developer_bot
-    return run_match(bots, seed=game_seed, keep_log=keep_log, developer_seat=seat)
+    return run_match(
+        bots,
+        seed=game_seed,
+        keep_log=keep_log,
+        developer_seat=seat,
+        decision_timeout=decision_timeout,
+    )
 
 
 def battle_many(
@@ -478,11 +534,13 @@ def battle_many(
     seed: int | None = None,
     alternate_seats: bool = True,
     keep_logs: bool = False,
+    decision_timeout: float | None = None,
 ) -> dict[str, Any]:
     if games < 1:
         raise ValueError("games must be >= 1")
     if not MIN_PLAYERS <= players <= MAX_PLAYERS:
         raise ValueError(f"players must be between {MIN_PLAYERS} and {MAX_PLAYERS}")
+    validate_decision_timeout(decision_timeout)
 
     wins_by_seat = [0 for _ in range(players)]
     developer_wins = 0
@@ -499,7 +557,13 @@ def battle_many(
             for player in range(players)
         ]
         bots[game_seat] = developer_bot
-        result = run_match(bots, seed=game_seed, keep_log=keep_logs, developer_seat=game_seat)
+        result = run_match(
+            bots,
+            seed=game_seed,
+            keep_log=keep_logs,
+            developer_seat=game_seat,
+            decision_timeout=decision_timeout,
+        )
         statuses[result["status"]] += 1
         for winner in result["winners"]:
             wins_by_seat[winner] += 1
@@ -625,6 +689,7 @@ def build_parser() -> argparse.ArgumentParser:
     battle_parser.add_argument("--seed", type=int, default=None)
     battle_parser.add_argument("--keep-logs", action="store_true")
     battle_parser.add_argument("--fixed-seat", action="store_true")
+    battle_parser.add_argument("--decision-timeout", type=float, default=None)
     return parser
 
 
@@ -647,6 +712,7 @@ def main(argv: list[str] | None = None) -> int:
                         seat=args.seat,
                         seed=args.seed,
                         keep_log=args.keep_logs,
+                        decision_timeout=args.decision_timeout,
                     )
                 )
             else:
@@ -658,6 +724,7 @@ def main(argv: list[str] | None = None) -> int:
                         seed=args.seed,
                         alternate_seats=not args.fixed_seat,
                         keep_logs=args.keep_logs,
+                        decision_timeout=args.decision_timeout,
                     )
                 )
             return 0

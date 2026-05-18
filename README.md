@@ -1,8 +1,9 @@
 # BoardArena
 
-BoardArena 是一个棋类/桌游 Bot 对战实验仓库。目前包含三个子项目：
+BoardArena 是一个棋类/桌游 Bot 对战实验仓库。目前包含四个子项目：
 
 - `lqq/`：路墙棋，支持本地网页对战和 2 人 Bot 裁判接口。
+- `nimmt/`：简化版 6 nimmt!，支持 2 到 6 人 Bot 对战、批量评测和日志查询。
 - `skull/`：Skull，支持多人 Bot 对战、批量评测和日志查询。
 - `chess/`：国际象棋，支持 Gym 风格环境、本地网页人人/人机对战和 2 人 Bot 裁判接口。
 
@@ -11,15 +12,21 @@ BoardArena 是一个棋类/桌游 Bot 对战实验仓库。目前包含三个子
 ```text
 BoardArena/
 ├── lqq/
-│   ├── index.html
+│   ├── env/
+│   ├── baseline/
+│   ├── doc/
 │   ├── lqq_multi.py
-│   ├── GAME_RULE.MD
-│   └── BOT_API.md
+├── nimmt/
+│   ├── env/
+│   ├── baseline/
+│   ├── doc/
+│   └── nimmt_multi.py
 ├── skull/
+│   ├── env/
+│   ├── baseline/
+│   ├── doc/
 │   ├── skull_multi.py
-│   ├── skull_cfr.py
-│   ├── README.md
-│   └── BOT_API.md
+│   └── skull_cfr.py
 ├── chess/
 │   ├── env/
 │   ├── baseline/
@@ -32,7 +39,7 @@ BoardArena/
 打开网页对战：
 
 ```powershell
-start .\lqq\index.html
+start .\lqq\env\index.html
 ```
 
 生成示例 Bot：
@@ -55,8 +62,35 @@ python .\lqq\lqq_multi.py battle --bot .\lqq\bot.py --players 2 --games 1000 --s
 
 更多规则和接口见：
 
-- `lqq/GAME_RULE.MD`
-- `lqq/BOT_API.md`
+- `lqq/doc/README.md`
+- `lqq/doc/GAME_RULE.md`
+- `lqq/doc/BOT_API.md`
+
+## nimmt
+
+生成示例 Bot：
+
+```powershell
+python .\nimmt\nimmt_multi.py sample-bot --output .\nimmt\bot_random.py
+```
+
+运行单局 Bot 对战：
+
+```powershell
+python .\nimmt\nimmt_multi.py battle --bot .\nimmt\bot_random.py --players 4 --games 1 --seed 1 --keep-logs
+```
+
+运行批量对战：
+
+```powershell
+python .\nimmt\nimmt_multi.py battle --bot .\nimmt\bot_random.py --players 6 --games 1000 --seed 1
+```
+
+更多说明见：
+
+- `nimmt/doc/README.md`
+- `nimmt/doc/GAME_RULE.md`
+- `nimmt/doc/BOT_API.md`
 
 ## Skull
 
@@ -74,8 +108,9 @@ python .\skull\skull_multi.py battle --bot .\skull\bot.py --players 6 --games 10
 
 更多说明见：
 
-- `skull/README.md`
-- `skull/BOT_API.md`
+- `skull/doc/README.md`
+- `skull/doc/GAME_RULE.md`
+- `skull/doc/BOT_API.md`
 
 ## Chess
 
@@ -115,12 +150,13 @@ python .\chess\env\chess_env.py battle --bot .\chess\baseline\gpt5p5\bot_easy.py
 
 ## Bot 接口约定
 
-每个游戏目录下都有自己的 `BOT_API.md`。通用约定是：
+每个游戏目录下都有自己的 `doc/BOT_API.md`。通用约定是：
 
 - Bot 文件通常命名为 `bot.py`。
 - Bot 需要提供 `choose_action(state)` 函数，或提供带 `choose_action` 方法的 `Bot` 类。
 - `choose_action(state)` 必须返回 `state["legal_actions"]` 中的一个字符串动作。
 - Bot 抛异常或返回非法动作时，裁判会结束本局并判该 Bot 负。
+- 对战命令支持 `--decision-timeout 秒` 限制单步决策耗时；超时会以 `timeout` 状态结束并判该 Bot 负。
 
 ## Git
 

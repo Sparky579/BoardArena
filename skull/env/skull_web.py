@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import json
 import random
+import sys
 import threading
 import uuid
 import webbrowser
@@ -14,6 +16,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 from urllib.parse import parse_qs, urlparse
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from skull_cfr import (
     FLOWER,
@@ -747,6 +754,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-cache")
         self.end_headers()
         self.wfile.write(body)
 
@@ -756,13 +764,13 @@ class Handler(BaseHTTPRequestHandler):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--policy", type=Path, default=Path("skull_policy.json"))
-    parser.add_argument("--compact-policy", type=Path, default=Path("skull_policy.json"))
-    parser.add_argument("--perfect-policy", type=Path, default=Path("skull_policy_perfect.json"))
+    parser.add_argument("--policy", type=Path, default=ROOT / "skull_policy.json")
+    parser.add_argument("--compact-policy", type=Path, default=ROOT / "skull_policy.json")
+    parser.add_argument("--perfect-policy", type=Path, default=ROOT / "skull_policy_perfect.json")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--no-browser", action="store_true")
+    parser.add_argument("--no-open", "--no-browser", dest="no_open", action="store_true")
     return parser
 
 
@@ -778,18 +786,31 @@ def load_named_policies(args: argparse.Namespace) -> Dict[str, tuple[Policy, str
 def main() -> int:
     args = build_parser().parse_args()
     policies = load_named_policies(args)
-    server = SkullServer((args.host, args.port), policies, args.seed)
-    url = f"http://{args.host}:{server.server_port}/"
+    server, port = bind_server(args, policies)
+    url = f"http://{args.host}:{port}/"
     loaded = ", ".join(f"{name}:{recall}" for name, (_, recall) in policies.items())
-    print(f"Skull UI running at {url}")
+    print(f"BoardArena skull UI: {url}")
     print(f"Loaded policies: {loaded}")
-    if not args.no_browser:
+    if not args.no_open:
         threading.Timer(0.4, lambda: webbrowser.open(url)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nStopping.")
     return 0
+
+
+def bind_server(
+    args: argparse.Namespace,
+    policies: Dict[str, tuple[Policy, str]],
+) -> tuple[SkullServer, int]:
+    for port in range(args.port, args.port + 20):
+        try:
+            return SkullServer((args.host, port), policies, args.seed), port
+        except OSError as exc:
+            if exc.errno != errno.EADDRINUSE:
+                raise
+    raise OSError(errno.EADDRINUSE, f"ports {args.port}-{args.port + 19} are in use")
 
 
 if __name__ == "__main__":

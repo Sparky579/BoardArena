@@ -133,13 +133,13 @@ python .\skull_cfr.py play --policy skull_policy.json --human 0
 浏览器 UI：
 
 ```powershell
-python .\skull_web.py --policy skull_policy.json
+python .\env\skull_web.py --policy skull_policy.json
 ```
 
 打开后访问 `http://127.0.0.1:8000/`。如果端口被占用，可以换端口：
 
 ```powershell
-python .\skull_web.py --policy skull_policy.json --port 8010
+python .\env\skull_web.py --policy skull_policy.json --port 8010
 ```
 
 浏览器 UI 会默认加载：
@@ -148,6 +148,14 @@ python .\skull_web.py --policy skull_policy.json --port 8010
 - `skull_policy_perfect.json` 作为 Perfect AI。
 
 页面右上角可以在新局前选择 `Compact AI` 或 `Perfect AI`。选择只影响新开的局，不会切换正在进行的 session。
+
+多人 Bot 对战：
+
+```powershell
+python .\skull_multi.py battle --bot .\bot.py --players 4 --games 100 --seed 1 --decision-timeout 2
+```
+
+`--decision-timeout` 用于限制每次 `choose_action(state)` 的最大秒数，超时会以 `timeout` 状态结束并判该 Bot 负。更多接口说明见 `BOT_API.md`。
 
 ## 更新记录
 
@@ -244,7 +252,7 @@ P0 508 - P1 492
 - `State`: 简化骷髅牌状态机，包含合法动作、动作转移、随机抽牌和信息集编码。
 - `CFRTrainer`: 采样式递归信息集 CFR 训练器。
 - `policy_action`: 从平均策略中采样动作；未见过的信息集使用 fallback 策略。
-- `skull_web.py`: 本地浏览器 UI 和简单 JSON API，复用同一套状态机和策略。
+- `env/skull_web.py`: 本地浏览器 UI 和简单 JSON API，复用同一套状态机和策略。
 
 ## 已知限制
 

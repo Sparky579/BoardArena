@@ -54,6 +54,7 @@ class Bot:
 - 返回值必须在 `state["legal_actions"]` 里。
 - Bot 只能看到自己的手牌和公共行、比分、历史，不会看到其他玩家手牌。
 - 如果 Bot 抛异常或返回非法动作，本局会以 `bot_exception` 或 `invalid_action` 结束，并判该 Bot 负。
+- 如果设置了单步决策限时，且 Bot 的一次 `choose_action(state)` 调用超时，本局会以 `timeout` 结束，并判该 Bot 负。
 
 ## state 字段
 
@@ -125,6 +126,7 @@ result = battle_once(
     seat=0,
     seed=1,
     keep_log=True,
+    decision_timeout=2.0,
 )
 print(result)
 ```
@@ -159,6 +161,7 @@ summary = battle_many(
     seed=1,
     alternate_seats=True,
     keep_logs=False,
+    decision_timeout=2.0,
 )
 print(summary)
 ```
@@ -172,7 +175,7 @@ print(summary)
 - `developer_wins`：开发者 Bot 成为最低分者的次数。
 - `developer_losses`：开发者 Bot 未成为最低分者的次数。
 - `developer_win_rate`：开发者 Bot 胜率。
-- `statuses`：`ok`、`invalid_action`、`bot_exception` 等状态统计。
+- `statuses`：`ok`、`invalid_action`、`bot_exception`、`timeout` 等状态统计。
 - `game_ids`：仅当 `keep_logs=True` 时返回可查询日志的 id。
 
 ### 查询对战日志
@@ -194,6 +197,7 @@ for item in get_match_log(result["game_id"]):
 - `T<t>:P<p>:PLACE:R<r>:<card>`：放入某行。
 - `T<t>:P<p>:SIXTH:R<r>:B<bulls>:<old_row>><card>`：成为第 6 张，吃掉该行。
 - `T<t>:P<p>:TAKE:R<r>:B<bulls>:<old_row>><card>`：牌太小，吃掉指定行。
+- `T<t>:ERR:P<p>:TIMEOUT`：玩家 Bot 单步决策超时。
 - `END:<status>:WINNERS:<players>:SCORES:<scores>:ROWS:<rows>`：一局结束。
 
 ## 命令行接口
@@ -214,6 +218,12 @@ python .\nimmt_multi.py battle --bot .\bot_random.py --players 4 --games 1 --sea
 
 ```powershell
 python .\nimmt_multi.py battle --bot .\bot_random.py --players 6 --games 1000 --seed 1
+```
+
+限制每次 `choose_action(state)` 最多思考 2 秒，超时自动判负：
+
+```powershell
+python .\nimmt_multi.py battle --bot .\bot_random.py --players 6 --games 100 --seed 1 --decision-timeout 2
 ```
 
 默认批量对战会轮换开发者 Bot 的座位。若要固定在 `seat=0`：

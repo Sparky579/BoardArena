@@ -9,8 +9,10 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import queue
 import random
 import sys
+import threading
 import traceback
 import uuid
 from collections import Counter, deque
@@ -36,6 +38,10 @@ _MATCH_LOGS: dict[str, list[str]] = {}
 
 class IllegalActionError(ValueError):
     """Raised when an action is not legal in the current state."""
+
+
+class BotTimeoutError(TimeoutError):
+    """Raised when a bot does not return an action before the deadline."""
 
 
 @dataclass
@@ -324,6 +330,39 @@ class CallableBot:
         self.name = name
 
 
+def choose_action_with_timeout(
+    bot: Any,
+    state: dict[str, Any],
+    decision_timeout: float | None,
+) -> Any:
+    if decision_timeout is None:
+        return bot.choose_action(state)
+
+    result_queue: queue.Queue[tuple[bool, Any]] = queue.Queue(maxsize=1)
+
+    def target() -> None:
+        try:
+            result_queue.put((True, bot.choose_action(state)))
+        except BaseException as exc:  # noqa: BLE001 - preserve existing bot failure semantics.
+            result_queue.put((False, exc))
+
+    thread = threading.Thread(target=target, daemon=True)
+    thread.start()
+    thread.join(decision_timeout)
+    if thread.is_alive():
+        raise BotTimeoutError(f"choose_action exceeded {decision_timeout:g} seconds")
+
+    ok, value = result_queue.get_nowait()
+    if ok:
+        return value
+    raise value
+
+
+def validate_decision_timeout(decision_timeout: float | None) -> None:
+    if decision_timeout is not None and decision_timeout <= 0:
+        raise ValueError("decision_timeout must be positive seconds or None")
+
+
 def wall_edges(direction: str, row: int, col: int) -> list[tuple[str, int, int]]:
     if direction == "H":
         return [("H", row, col), ("H", row, col + 1)]
@@ -379,11 +418,13 @@ def battle_once(
     seed: int | None = None,
     keep_log: bool = True,
     turn_limit: int = DEFAULT_TURN_LIMIT,
+    decision_timeout: float | None = None,
 ) -> dict[str, Any]:
     if players != SUPPORTED_PLAYERS:
         raise ValueError("lqq_multi only supports players=2")
     if seat not in (0, 1):
         raise ValueError("seat must be 0 or 1")
+    validate_decision_timeout(decision_timeout)
 
     game_seed = seed if seed is not None else random.randrange(1 << 30)
     rng = random.Random(game_seed)
@@ -412,7 +453,13 @@ def battle_once(
             break
 
         try:
-            action = bots[actor].choose_action(bot_state)
+            action = choose_action_with_timeout(bots[actor], bot_state, decision_timeout)
+        except BotTimeoutError as exc:
+            status = "timeout"
+            state.winner = 1 - actor
+            error = f"player {actor} timed out: {exc}"
+            log.append(f"T{state.turn}:ERR:P{actor}:TIMEOUT")
+            break
         except Exception as exc:  # noqa: BLE001 - bot exceptions are match results.
             status = "bot_exception"
             state.winner = 1 - actor
@@ -467,11 +514,13 @@ def battle_many(
     alternate_seats: bool = True,
     keep_logs: bool = False,
     turn_limit: int = DEFAULT_TURN_LIMIT,
+    decision_timeout: float | None = None,
 ) -> dict[str, Any]:
     if players != SUPPORTED_PLAYERS:
         raise ValueError("lqq_multi only supports players=2")
     if games < 1:
         raise ValueError("games must be >= 1")
+    validate_decision_timeout(decision_timeout)
 
     wins_by_seat = [0, 0]
     statuses: Counter[str] = Counter()
@@ -489,6 +538,7 @@ def battle_many(
             seed=game_seed,
             keep_log=keep_logs,
             turn_limit=turn_limit,
+            decision_timeout=decision_timeout,
         )
         statuses[result["status"]] += 1
         if result["winner"] in (0, 1):
@@ -558,6 +608,7 @@ def main(argv: list[str] | None = None) -> int:
     battle_parser.add_argument("--keep-logs", action="store_true")
     battle_parser.add_argument("--fixed-seat", action="store_true")
     battle_parser.add_argument("--turn-limit", type=int, default=DEFAULT_TURN_LIMIT)
+    battle_parser.add_argument("--decision-timeout", type=float, default=None)
 
     args = parser.parse_args(argv)
 
@@ -576,6 +627,7 @@ def main(argv: list[str] | None = None) -> int:
                     seed=args.seed,
                     keep_log=args.keep_logs,
                     turn_limit=args.turn_limit,
+                    decision_timeout=args.decision_timeout,
                 )
             )
         else:
@@ -589,6 +641,7 @@ def main(argv: list[str] | None = None) -> int:
                     alternate_seats=not args.fixed_seat,
                     keep_logs=args.keep_logs,
                     turn_limit=args.turn_limit,
+                    decision_timeout=args.decision_timeout,
                 )
             )
         return 0

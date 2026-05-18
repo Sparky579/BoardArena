@@ -110,6 +110,12 @@ python BoardArena/chess/env/chess_env.py battle --bot BoardArena/chess/baseline/
 python BoardArena/chess/env/chess_env.py battle --bot BoardArena/chess/baseline/gpt5p5/bot_easy.py --games 100 --seed 1
 ```
 
+限制单步决策最多 2 秒：
+
+```bash
+python BoardArena/chess/env/chess_env.py battle --bot BoardArena/chess/baseline/gpt5p5/bot_easy.py --games 100 --seed 1 --decision-timeout 2
+```
+
 生成最小示例 bot：
 
 ```bash

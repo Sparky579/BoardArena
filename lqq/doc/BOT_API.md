@@ -50,6 +50,7 @@ class Bot:
 - 返回值必须在 `state["legal_actions"]` 里。
 - 路墙棋没有暗牌，bot 可以看到双方位置、剩余墙数和已放置的墙。
 - 如果 bot 抛异常或返回非法动作，本局会以 `bot_exception` 或 `invalid_action` 结束，并判该 bot 负。
+- 如果设置了单步决策限时，且 bot 的一次 `choose_action(state)` 调用超时，本局会以 `timeout` 结束，并判该 bot 负。
 - 如果极端局面下当前玩家没有任何合法动作，本局会以 `no_legal_actions` 结束，并判对手胜。
 
 ## state 字段
@@ -110,6 +111,7 @@ result = battle_once(
     seat=0,
     seed=1,
     keep_log=True,
+    decision_timeout=2.0,
 )
 print(result)
 ```
@@ -143,6 +145,7 @@ summary = battle_many(
     seed=1,
     alternate_seats=True,
     keep_logs=False,
+    decision_timeout=2.0,
 )
 print(summary)
 ```
@@ -155,7 +158,7 @@ print(summary)
 - `developer_wins`：开发者 bot 胜场。
 - `developer_losses`：开发者 bot 负场。
 - `developer_win_rate`：开发者 bot 胜率。
-- `statuses`：`ok`、`turn_limit`、`invalid_action`、`bot_exception`、`no_legal_actions` 等状态统计。
+- `statuses`：`ok`、`turn_limit`、`invalid_action`、`bot_exception`、`timeout`、`no_legal_actions` 等状态统计。
 - `game_ids`：仅当 `keep_logs=True` 时返回可查询日志的 id。
 
 ### 查询对战日志
@@ -177,6 +180,7 @@ for item in log:
 - `T<t>:P<p>:WALL:V:<r>:<c>`：玩家放置竖墙。
 - `T<t>:ERR:P<p>:INVALID:<action>`：玩家返回非法动作。
 - `T<t>:ERR:P<p>:EXCEPTION:<type>`：玩家 bot 抛异常。
+- `T<t>:ERR:P<p>:TIMEOUT`：玩家 bot 单步决策超时。
 - `T<t>:ERR:P<p>:NO_LEGAL_ACTIONS`：玩家没有任何合法动作。
 - `END:<status>:WINNER:<p>:POS:<positions>:WALLS:<walls_remaining>`：一局结束。
 
@@ -198,6 +202,12 @@ python .\lqq_multi.py battle --bot .\bot.py --players 2 --games 1 --seat 0 --see
 
 ```powershell
 python .\lqq_multi.py battle --bot .\bot.py --players 2 --games 1000 --seed 1
+```
+
+限制每次 `choose_action(state)` 最多思考 2 秒，超时自动判负：
+
+```powershell
+python .\lqq_multi.py battle --bot .\bot.py --players 2 --games 100 --seed 1 --decision-timeout 2
 ```
 
 默认批量对战会轮换开发者 bot 的座位，减少座位优势影响。如需固定开发者 bot 在 `seat=0`：

@@ -29,6 +29,12 @@ python .\nimmt_multi.py battle --bot .\bot_random.py --players 4 --games 1 --see
 python .\nimmt_multi.py battle --bot .\bot_random.py --players 6 --games 1000 --seed 1
 ```
 
+限制单步决策最多 2 秒：
+
+```powershell
+python .\nimmt_multi.py battle --bot .\bot_random.py --players 6 --games 100 --seed 1 --decision-timeout 2
+```
+
 生成一个新的随机 Bot 文件：
 
 ```powershell

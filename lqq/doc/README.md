@@ -18,3 +18,19 @@
 - 点击棋盘墙槽可按槽方向放墙。
 - 点击墙槽交叉点时，使用右侧选择的横墙/竖墙方向。
 - 可以悔棋或重新开始。
+
+## Bot 对战
+
+单局对战：
+
+```powershell
+python .\lqq_multi.py battle --bot .\bot.py --players 2 --games 1 --seed 1 --keep-logs
+```
+
+批量对战并限制单步决策最多 2 秒：
+
+```powershell
+python .\lqq_multi.py battle --bot .\bot.py --players 2 --games 100 --seed 1 --decision-timeout 2
+```
+
+更多接口说明见 `BOT_API.md`。
