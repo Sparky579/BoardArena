@@ -90,8 +90,6 @@ function hasWallBetween(fromRow, fromCol, toRow, toCol) {
 }
 
 function legalMoves(playerIndex = state.current) {
-  const player = state.players[playerIndex];
-  const opponent = state.players[1 - playerIndex];
   const deltas = [
     [-1, 0],
     [1, 0],
@@ -100,12 +98,27 @@ function legalMoves(playerIndex = state.current) {
   ];
 
   return deltas
-    .map(([dr, dc]) => ({ row: player.row + dr, col: player.col + dc }))
-    .filter(({ row, col }) => {
-      if (!inBounds(row, col)) return false;
-      if (row === opponent.row && col === opponent.col) return false;
-      return !hasWallBetween(player.row, player.col, row, col);
-    });
+    .map(([dr, dc]) => moveDestination(playerIndex, dr, dc))
+    .filter((move) => move !== null);
+}
+
+function moveDestination(playerIndex, dr, dc) {
+  const player = state.players[playerIndex];
+  const opponent = state.players[1 - playerIndex];
+  const row = player.row + dr;
+  const col = player.col + dc;
+
+  if (!inBounds(row, col)) return null;
+  if (hasWallBetween(player.row, player.col, row, col)) return null;
+  if (row !== opponent.row || col !== opponent.col) {
+    return { row, col };
+  }
+
+  const jumpRow = opponent.row + dr;
+  const jumpCol = opponent.col + dc;
+  if (!inBounds(jumpRow, jumpCol)) return null;
+  if (hasWallBetween(opponent.row, opponent.col, jumpRow, jumpCol)) return null;
+  return { row: jumpRow, col: jumpCol };
 }
 
 function movePlayer(row, col) {

@@ -1,7 +1,8 @@
 """Two-player referee and bot battle API for Luqiangqi.
 
 The public API mirrors the simple battle interface used by other games in this
-workspace: battle_once, battle_many, and get_match_log.
+workspace: battle_once, battle_many, battle_bots_once, battle_bots_many, and
+get_match_log.
 """
 
 from __future__ import annotations
@@ -100,16 +101,9 @@ class GameState:
     def legal_actions(self, player_id: int) -> list[str]:
         actions: list[str] = []
         player = self.players[player_id]
-        opponent = self.players[1 - player_id]
 
-        for action, (dr, dc) in MOVE_DELTAS.items():
-            row = player.row + dr
-            col = player.col + dc
-            if not self._in_bounds(row, col):
-                continue
-            if row == opponent.row and col == opponent.col:
-                continue
-            if not self._has_wall_between(player.row, player.col, row, col):
+        for action in MOVE_DELTAS:
+            if self._move_destination(player_id, action) is not None:
                 actions.append(action)
 
         if player.walls > 0:
@@ -127,9 +121,10 @@ class GameState:
         if action in MOVE_DELTAS:
             player = self.players[actor]
             old_row, old_col = player.row, player.col
-            dr, dc = MOVE_DELTAS[action]
-            player.row += dr
-            player.col += dc
+            destination = self._move_destination(actor, action)
+            if destination is None:
+                raise ValueError(f"illegal move action {action!r}")
+            player.row, player.col = destination
             if player.row == player.goal_row:
                 self.winner = actor
             self.current = 1 - self.current
@@ -190,6 +185,28 @@ class GameState:
             if self._in_bounds(next_row, next_col) and not self._has_wall_between(row, col, next_row, next_col):
                 result.append((next_row, next_col))
         return result
+
+    def _move_destination(self, player_id: int, action: str) -> tuple[int, int] | None:
+        player = self.players[player_id]
+        opponent = self.players[1 - player_id]
+        dr, dc = MOVE_DELTAS[action]
+        row = player.row + dr
+        col = player.col + dc
+
+        if not self._in_bounds(row, col):
+            return None
+        if self._has_wall_between(player.row, player.col, row, col):
+            return None
+        if row != opponent.row or col != opponent.col:
+            return row, col
+
+        jump_row = opponent.row + dr
+        jump_col = opponent.col + dc
+        if not self._in_bounds(jump_row, jump_col):
+            return None
+        if self._has_wall_between(opponent.row, opponent.col, jump_row, jump_col):
+            return None
+        return jump_row, jump_col
 
     def _has_wall_between(self, from_row: int, from_col: int, to_row: int, to_col: int) -> bool:
         if from_row == to_row:
@@ -411,19 +428,19 @@ def load_bot(bot_path: str | Path) -> Any:
     raise AttributeError("bot.py must define choose_action(state) or class Bot")
 
 
-def battle_once(
-    bot_path: str | Path,
-    players: int = SUPPORTED_PLAYERS,
-    seat: int = 0,
+def _run_match(
+    bots: list[Any],
+    *,
     seed: int | None = None,
     keep_log: bool = True,
     turn_limit: int = DEFAULT_TURN_LIMIT,
     decision_timeout: float | None = None,
+    developer_seat: int | None = None,
+    bot_indices_by_seat: list[int] | None = None,
+    bot_paths: list[str] | None = None,
 ) -> dict[str, Any]:
-    if players != SUPPORTED_PLAYERS:
-        raise ValueError("lqq_multi only supports players=2")
-    if seat not in (0, 1):
-        raise ValueError("seat must be 0 or 1")
+    if len(bots) != SUPPORTED_PLAYERS:
+        raise ValueError("lqq matches require exactly 2 bots")
     validate_decision_timeout(decision_timeout)
 
     game_seed = seed if seed is not None else random.randrange(1 << 30)
@@ -431,9 +448,6 @@ def battle_once(
     game_id = uuid.uuid4().hex[:12]
     log: list[str] = [f"G:{game_id}:N2:SEED{game_seed}"]
 
-    developer_bot = load_bot(bot_path)
-    bots: list[Any] = [SystemBot(rng), SystemBot(rng)]
-    bots[seat] = developer_bot
     bot_names = [getattr(bot, "name", f"bot_{index}") for index, bot in enumerate(bots)]
 
     state = GameState(rng=rng)
@@ -490,8 +504,7 @@ def battle_once(
     if keep_log:
         _MATCH_LOGS[game_id] = log
 
-    developer_win = state.winner == seat
-    return {
+    result: dict[str, Any] = {
         "game_id": game_id,
         "winner": state.winner,
         "status": status,
@@ -499,10 +512,49 @@ def battle_once(
         "positions": [[p.row, p.col] for p in state.players],
         "walls_remaining": [p.walls for p in state.players],
         "bot_names": bot_names,
-        "developer_seat": seat,
-        "developer_win": developer_win,
         "error": error,
     }
+    if developer_seat is not None:
+        result["developer_seat"] = developer_seat
+        result["developer_win"] = state.winner == developer_seat
+    if bot_indices_by_seat is not None:
+        result["winner_bot"] = None if state.winner is None else bot_indices_by_seat[state.winner]
+        result["bot_seats"] = [
+            bot_indices_by_seat.index(bot_index)
+            for bot_index in range(len(bot_indices_by_seat))
+        ]
+    if bot_paths is not None:
+        result["bot_paths"] = bot_paths
+    return result
+
+
+def battle_once(
+    bot_path: str | Path,
+    players: int = SUPPORTED_PLAYERS,
+    seat: int = 0,
+    seed: int | None = None,
+    keep_log: bool = True,
+    turn_limit: int = DEFAULT_TURN_LIMIT,
+    decision_timeout: float | None = None,
+) -> dict[str, Any]:
+    if players != SUPPORTED_PLAYERS:
+        raise ValueError("lqq_multi only supports players=2")
+    if seat not in (0, 1):
+        raise ValueError("seat must be 0 or 1")
+
+    game_seed = seed if seed is not None else random.randrange(1 << 30)
+    rng = random.Random(game_seed)
+    developer_bot = load_bot(bot_path)
+    bots: list[Any] = [SystemBot(rng), SystemBot(rng)]
+    bots[seat] = developer_bot
+    return _run_match(
+        bots,
+        seed=game_seed,
+        keep_log=keep_log,
+        turn_limit=turn_limit,
+        decision_timeout=decision_timeout,
+        developer_seat=seat,
+    )
 
 
 def battle_many(
@@ -564,6 +616,101 @@ def battle_many(
     return summary
 
 
+def battle_bots_once(
+    bot0_path: str | Path,
+    bot1_path: str | Path,
+    *,
+    bot0_seat: int = 0,
+    seed: int | None = None,
+    keep_log: bool = True,
+    turn_limit: int = DEFAULT_TURN_LIMIT,
+    decision_timeout: float | None = None,
+) -> dict[str, Any]:
+    """Run one game between two bot files.
+
+    ``bot0_path`` and ``bot1_path`` are identified as bot indexes 0 and 1 in
+    the returned ``winner_bot`` and ``wins_by_bot`` fields, independent of seat.
+    """
+
+    if bot0_seat not in (0, 1):
+        raise ValueError("bot0_seat must be 0 or 1")
+
+    bot_paths = [str(Path(bot0_path)), str(Path(bot1_path))]
+    bot0 = load_bot(bot0_path)
+    bot1 = load_bot(bot1_path)
+    bots: list[Any] = [bot0, bot1] if bot0_seat == 0 else [bot1, bot0]
+    bot_indices_by_seat = [0, 1] if bot0_seat == 0 else [1, 0]
+    return _run_match(
+        bots,
+        seed=seed,
+        keep_log=keep_log,
+        turn_limit=turn_limit,
+        decision_timeout=decision_timeout,
+        bot_indices_by_seat=bot_indices_by_seat,
+        bot_paths=bot_paths,
+    )
+
+
+def battle_bots_many(
+    bot0_path: str | Path,
+    bot1_path: str | Path,
+    *,
+    games: int = 100,
+    bot0_seat: int = 0,
+    seed: int | None = None,
+    alternate_seats: bool = True,
+    keep_logs: bool = False,
+    turn_limit: int = DEFAULT_TURN_LIMIT,
+    decision_timeout: float | None = None,
+) -> dict[str, Any]:
+    """Run many games between two arbitrary bot files."""
+
+    if games < 1:
+        raise ValueError("games must be >= 1")
+    if bot0_seat not in (0, 1):
+        raise ValueError("bot0_seat must be 0 or 1")
+    validate_decision_timeout(decision_timeout)
+
+    wins_by_bot = [0, 0]
+    wins_by_seat = [0, 0]
+    statuses: Counter[str] = Counter()
+    game_ids: list[str] = []
+
+    for index in range(games):
+        game_bot0_seat = (bot0_seat + index) % 2 if alternate_seats else bot0_seat
+        game_seed = None if seed is None else seed + index
+        result = battle_bots_once(
+            bot0_path,
+            bot1_path,
+            bot0_seat=game_bot0_seat,
+            seed=game_seed,
+            keep_log=keep_logs,
+            turn_limit=turn_limit,
+            decision_timeout=decision_timeout,
+        )
+        statuses[result["status"]] += 1
+        if result["winner"] in (0, 1):
+            wins_by_seat[result["winner"]] += 1
+        if result["winner_bot"] in (0, 1):
+            wins_by_bot[result["winner_bot"]] += 1
+        if keep_logs:
+            game_ids.append(result["game_id"])
+
+    summary: dict[str, Any] = {
+        "games": games,
+        "players": SUPPORTED_PLAYERS,
+        "bot_paths": [str(Path(bot0_path)), str(Path(bot1_path))],
+        "wins_by_bot": wins_by_bot,
+        "wins_by_seat": wins_by_seat,
+        "bot0_win_rate": wins_by_bot[0] / games,
+        "bot1_win_rate": wins_by_bot[1] / games,
+        "statuses": dict(statuses),
+    }
+    if keep_logs:
+        summary["game_ids"] = game_ids
+    return summary
+
+
 def get_match_log(game_id: str) -> list[str]:
     return list(_MATCH_LOGS.get(game_id, []))
 
@@ -610,6 +757,17 @@ def main(argv: list[str] | None = None) -> int:
     battle_parser.add_argument("--turn-limit", type=int, default=DEFAULT_TURN_LIMIT)
     battle_parser.add_argument("--decision-timeout", type=float, default=None)
 
+    duel_parser = subparsers.add_parser("duel", help="run games between two bot files")
+    duel_parser.add_argument("--bot0", required=True)
+    duel_parser.add_argument("--bot1", required=True)
+    duel_parser.add_argument("--games", type=int, default=1)
+    duel_parser.add_argument("--seed", type=int, default=None)
+    duel_parser.add_argument("--keep-logs", action="store_true")
+    duel_parser.add_argument("--fixed-seats", action="store_true")
+    duel_parser.add_argument("--bot0-seat", type=int, default=0)
+    duel_parser.add_argument("--turn-limit", type=int, default=DEFAULT_TURN_LIMIT)
+    duel_parser.add_argument("--decision-timeout", type=float, default=None)
+
     args = parser.parse_args(argv)
 
     try:
@@ -618,7 +776,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"wrote {args.output}")
             return 0
 
-        if args.games == 1:
+        if args.command == "battle" and args.games == 1:
             _print_json(
                 battle_once(
                     args.bot,
@@ -630,7 +788,7 @@ def main(argv: list[str] | None = None) -> int:
                     decision_timeout=args.decision_timeout,
                 )
             )
-        else:
+        elif args.command == "battle":
             _print_json(
                 battle_many(
                     args.bot,
@@ -639,6 +797,32 @@ def main(argv: list[str] | None = None) -> int:
                     seat=args.seat,
                     seed=args.seed,
                     alternate_seats=not args.fixed_seat,
+                    keep_logs=args.keep_logs,
+                    turn_limit=args.turn_limit,
+                    decision_timeout=args.decision_timeout,
+                )
+            )
+        elif args.command == "duel" and args.games == 1:
+            _print_json(
+                battle_bots_once(
+                    args.bot0,
+                    args.bot1,
+                    bot0_seat=args.bot0_seat,
+                    seed=args.seed,
+                    keep_log=args.keep_logs,
+                    turn_limit=args.turn_limit,
+                    decision_timeout=args.decision_timeout,
+                )
+            )
+        elif args.command == "duel":
+            _print_json(
+                battle_bots_many(
+                    args.bot0,
+                    args.bot1,
+                    games=args.games,
+                    bot0_seat=args.bot0_seat,
+                    seed=args.seed,
+                    alternate_seats=not args.fixed_seats,
                     keep_logs=args.keep_logs,
                     turn_limit=args.turn_limit,
                     decision_timeout=args.decision_timeout,

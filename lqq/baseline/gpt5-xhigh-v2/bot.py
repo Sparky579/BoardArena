@@ -6,7 +6,7 @@ import time
 
 BOARD_SIZE = 9
 INF = 10**9
-SAFETY_SECONDS = 0.30
+SAFETY_SECONDS = 1.35
 
 MOVE_DELTAS = {
     "MOVE_UP": (-1, 0),
@@ -111,7 +111,9 @@ class MiniState:
         )
 
     def apply(self, action):
-        actor = self.current
+        return self.apply_as(self.current, action)
+
+    def apply_as(self, actor, action):
         positions = [list(pos) for pos in self.positions]
         walls_remaining = list(self.walls_remaining)
         walls = set(self.walls)
@@ -330,7 +332,7 @@ class MiniState:
                     direction, row, col = parsed
                     if self.is_wall_legal(direction, row, col):
                         result.add(action)
-        return list(result)
+        return sorted(result)
 
 
 def walls_blocking_step(a, b):
@@ -370,16 +372,30 @@ def edges_for_step(a, b):
 
 
 class Bot:
-    name = "gpt5_xhigh_lqq"
+    name = "gpt5_xhigh_lqq_v2"
+
+    def __init__(self):
+        self.recent_positions = []
+        self.root_actor = None
 
     def choose_action(self, state):
         legal = state.get("legal_actions", [])
         if not legal:
             return ""
         try:
-            return self._choose_action(state, legal)
+            action = self._choose_action(state, legal)
         except Exception:
-            return self._fallback(state, legal)
+            action = self._fallback(state, legal)
+        self.remember_action(state, action)
+        return action
+
+    def remember_action(self, state, action):
+        if action not in MOVE_DELTAS:
+            return
+        root = MiniState.from_bot_state(state)
+        child = root.apply(action)
+        self.recent_positions.append(child.positions[root.current])
+        self.recent_positions = self.recent_positions[-8:]
 
     def _choose_action(self, state, legal):
         quick = self.quick_opening_action(state, legal)
@@ -389,6 +405,7 @@ class Bot:
         self.deadline = time.perf_counter() + SAFETY_SECONDS
         root = MiniState.from_bot_state(state)
         me = root.current
+        self.root_actor = me
 
         for action in legal:
             if action in MOVE_DELTAS:
@@ -396,12 +413,28 @@ class Bot:
                 if child.winner == me:
                     return action
 
+        urgent = self.urgent_defense_action(root, legal)
+        if urgent is not None:
+            return urgent
+
+        anti_jump = self.anti_jump_action(root, legal)
+        if anti_jump is not None:
+            return anti_jump
+
+        progress = self.progress_action(root, legal)
+        if progress is not None:
+            return progress
+
+        closing = self.closing_move(root, legal)
+        if closing is not None:
+            return closing
+
         ranked = self.rank_actions(root, legal_actions=legal, root=True)
         if not ranked:
             return self._fallback(state, legal)
         best_action = ranked[0]
 
-        for depth in (1, 2):
+        for depth in (1, 2, 3):
             try:
                 value, action = self.search_root(root, me, legal, depth)
                 if action is not None:
@@ -411,6 +444,127 @@ class Bot:
             except SearchTimeout:
                 break
         return best_action if best_action in legal else self._fallback(state, legal)
+
+    def urgent_defense_action(self, state, legal):
+        opponent = 1 - state.current
+        if not self.has_immediate_win(state, opponent):
+            return None
+
+        candidates = []
+        for action in legal:
+            child = state.apply(action)
+            if child.winner == state.current:
+                return action
+            if self.has_immediate_win(child, opponent):
+                continue
+            candidates.append((self.score_action(state, action, state.current), action))
+
+        if not candidates:
+            return None
+        candidates.sort(reverse=True)
+        return candidates[0][1]
+
+    def anti_jump_action(self, state, legal):
+        actor = state.current
+        opponent = 1 - actor
+        path_action = self.shortest_path_move(state, actor, legal)
+        if path_action is None:
+            return None
+        path_child = state.apply(path_action)
+        if not self.has_jump_gain(path_child, opponent):
+            return None
+
+        candidates = []
+        for action in legal:
+            child = state.apply(action)
+            if child.winner == actor:
+                return action
+            if self.has_immediate_win(child, opponent) or self.has_jump_gain(child, opponent):
+                continue
+            candidates.append((self.score_action(state, action, actor), action))
+
+        if not candidates:
+            return None
+        candidates.sort(reverse=True)
+        return candidates[0][1]
+
+    def progress_action(self, state, legal):
+        if state.turn < 20:
+            return None
+
+        actor = state.current
+        opponent = 1 - actor
+        before = state.shortest_distance(actor)
+        candidates = []
+        for action in legal:
+            if action not in MOVE_DELTAS:
+                continue
+            child = state.apply(action)
+            after = child.shortest_distance(actor)
+            if after >= before:
+                continue
+            if self.has_immediate_win(child, opponent) or self.has_jump_gain(child, opponent):
+                continue
+            candidates.append((self.score_action(state, action, actor), action))
+
+        if not candidates:
+            return None
+        candidates.sort(reverse=True)
+        return candidates[0][1]
+
+    def closing_move(self, state, legal):
+        actor = state.current
+        opponent = 1 - actor
+        my_dist = state.shortest_distance(actor)
+        opp_dist = state.shortest_distance(opponent)
+        my_race = 2 * my_dist - 1
+        opp_race = 2 * opp_dist
+
+        if my_dist > 5 and my_race > opp_race - 2:
+            return None
+
+        action = self.shortest_path_move(state, actor, legal)
+        if action is None:
+            return None
+
+        child = state.apply(action)
+        if child.shortest_distance(actor) >= my_dist:
+            return None
+        if my_race <= opp_race or my_dist <= 3:
+            if not self.has_immediate_win(child, opponent) and not self.has_jump_gain(child, opponent):
+                return action
+        return None
+
+    @staticmethod
+    def has_immediate_win(state, player):
+        for action in state.legal_moves(player):
+            child = state.apply_as(player, action)
+            if child.winner == player:
+                return True
+        return False
+
+    @staticmethod
+    def has_jump_gain(state, player):
+        row, col = state.positions[player]
+        for action in state.legal_moves(player):
+            destination = state.move_destination(player, action)
+            if destination is None:
+                continue
+            dest_row, dest_col = destination
+            if abs(dest_row - row) + abs(dest_col - col) >= 2:
+                return True
+        return False
+
+    @staticmethod
+    def shortest_path_move(state, actor, legal):
+        _, path = state.shortest_path(actor)
+        if len(path) < 2:
+            return None
+        target = path[1]
+        for action in MOVE_DELTAS:
+            if action in legal and state.move_destination(actor, action) == target:
+                return action
+        return None
 
     def search_root(self, state, me, legal, depth):
         self.check_time()
@@ -477,10 +631,14 @@ class Bot:
         scored_walls.sort(reverse=True)
 
         wall_limit = 20 if root else 8
-        if state.shortest_distance(1 - actor) <= 2:
+        actor_dist = state.shortest_distance(actor)
+        opponent_dist = state.shortest_distance(1 - actor)
+        if opponent_dist <= 2:
             wall_limit += 8
-        if state.shortest_distance(actor) <= 2 and state.shortest_distance(actor) <= state.shortest_distance(1 - actor):
+        if actor_dist <= 2 and actor_dist <= opponent_dist:
             wall_limit = max(6, wall_limit // 2)
+        if actor_dist <= 5 and actor_dist <= opponent_dist:
+            wall_limit = min(wall_limit, 4 if root else 2)
 
         ordered = [action for _, action in scored_moves]
         ordered.extend(action for _, action in scored_walls[:wall_limit])
@@ -497,17 +655,33 @@ class Bot:
         if action in MOVE_DELTAS:
             before = state.shortest_distance(actor)
             after = child.shortest_distance(actor)
-            score += 18.0 * (before - after)
+            opponent = 1 - actor
+            opp_dist = state.shortest_distance(opponent)
+            score += 42.0 * (before - after)
             row, col = child.positions[actor]
             score += 0.15 * (4 - abs(col - 4))
-            if after > before:
-                score -= 15.0
+            if self.has_jump_gain(child, opponent):
+                score -= 120.0
+            if actor == self.root_actor and child.positions[actor] in self.recent_positions[-4:]:
+                score -= 85.0
+            if actor == self.root_actor and len(self.recent_positions) >= 2:
+                if child.positions[actor] == self.recent_positions[-2]:
+                    score -= 180.0
+            if after >= before:
+                score -= 28.0
+            if before <= 5 and before <= opp_dist and after >= before:
+                score -= 90.0
+            path_action = self.shortest_path_move(state, actor, [action])
+            if path_action == action:
+                score += 14.0
             return score
 
         opponent = 1 - actor
         opp_gain = child.shortest_distance(opponent) - state.shortest_distance(opponent)
         self_cost = child.shortest_distance(actor) - state.shortest_distance(actor)
         score += 32.0 * opp_gain - 18.0 * self_cost - 2.2
+        if state.shortest_distance(actor) <= 5 and state.shortest_distance(actor) <= state.shortest_distance(opponent):
+            score -= 34.0
         if opp_gain <= 0:
             score -= 20.0
         if state.shortest_distance(opponent) <= state.shortest_distance(actor):
@@ -580,7 +754,7 @@ class Bot:
         opponent = 1 - player_id
         row = state["positions"][player_id][0]
         opp_row = state["positions"][opponent][0]
-        if abs(row - opp_row) <= 1:
+        if abs(row - opp_row) <= 2:
             return None
         goal = state["goal_rows"][player_id]
         forward = "MOVE_UP" if goal < row else "MOVE_DOWN"

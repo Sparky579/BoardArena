@@ -7,7 +7,7 @@
 - 支持玩家数：固定 `2`。
 - 棋盘为 `9 x 9`。
 - 每方初始 `10` 堵墙。
-- 每回合只能移动一格，或放置一堵两格长的墙。
+- 每回合只能移动一格、在同方向跳过紧邻对手，或放置一堵两格长的墙。
 - 墙不能重叠、交叉，也不能完全堵死任一方通往终点的路线。
 - 玩家 `0` 从下方向上走，玩家 `1` 从上方向下走。
 - 先到达对面底线者获胜。
@@ -89,12 +89,14 @@ class Bot:
 
 ## 动作说明
 
-- `MOVE_UP`：向上移动一格。
-- `MOVE_DOWN`：向下移动一格。
-- `MOVE_LEFT`：向左移动一格。
-- `MOVE_RIGHT`：向右移动一格。
+- `MOVE_UP`：向上移动一格；如果正上方紧邻对手且对手后方无墙，则向上跳过对手。
+- `MOVE_DOWN`：向下移动一格；如果正下方紧邻对手且对手后方无墙，则向下跳过对手。
+- `MOVE_LEFT`：向左移动一格；如果左侧紧邻对手且对手后方无墙，则向左跳过对手。
+- `MOVE_RIGHT`：向右移动一格；如果右侧紧邻对手且对手后方无墙，则向右跳过对手。
 - `WALL_H_r_c`：在原点 `(r, c)` 放置横墙。
 - `WALL_V_r_c`：在原点 `(r, c)` 放置竖墙。
+
+移动动作的字符串仍然只表示方向；当该方向触发跳跃规则时，裁判会把棋子移动到对手后方一格。
 
 墙坐标 `r` 和 `c` 的合法范围是 `0..7`。例如 `WALL_H_3_4` 表示在第 `3` 行、第 `4` 列原点放置横墙。
 
@@ -161,6 +163,49 @@ print(summary)
 - `statuses`：`ok`、`turn_limit`、`invalid_action`、`bot_exception`、`timeout`、`no_legal_actions` 等状态统计。
 - `game_ids`：仅当 `keep_logs=True` 时返回可查询日志的 id。
 
+### 两个任意 Bot 路径对战
+
+单局：
+
+```python
+from lqq_multi import battle_bots_once
+
+result = battle_bots_once(
+    "bot_a.py",
+    "bot_b.py",
+    bot0_seat=0,
+    seed=1,
+    keep_log=True,
+    decision_timeout=2.0,
+)
+print(result)
+```
+
+多局：
+
+```python
+from lqq_multi import battle_bots_many
+
+summary = battle_bots_many(
+    "bot_a.py",
+    "bot_b.py",
+    games=1000,
+    seed=1,
+    alternate_seats=True,
+    keep_logs=False,
+    decision_timeout=2.0,
+)
+print(summary)
+```
+
+`bot0_path` 和 `bot1_path` 可以是任意可导入的 Bot 文件路径。`battle_bots_many` 默认轮换两者座位；返回的 `wins_by_bot` 按传入路径顺序统计胜场，`wins_by_seat` 按座位统计胜场。
+
+单局结果会额外包含：
+
+- `winner_bot`：胜利 Bot 的输入序号，`0` 对应第一个路径，`1` 对应第二个路径；无胜者时为 `None`。
+- `bot_seats`：两个输入 Bot 当前所在座位，例如 `[1, 0]` 表示第一个路径坐在 `seat=1`，第二个路径坐在 `seat=0`。
+- `bot_paths`：本次对战使用的两个 Bot 路径。
+
 ### 查询对战日志
 
 ```python
@@ -214,4 +259,16 @@ python .\lqq_multi.py battle --bot .\bot.py --players 2 --games 100 --seed 1 --d
 
 ```powershell
 python .\lqq_multi.py battle --bot .\bot.py --players 2 --games 100 --fixed-seat
+```
+
+两个任意路径 Bot 互相对战：
+
+```powershell
+python .\lqq_multi.py duel --bot0 .\bot_a.py --bot1 .\bot_b.py --games 1000 --seed 1 --decision-timeout 2
+```
+
+默认会轮换两者座位。如需固定座位：
+
+```powershell
+python .\lqq_multi.py duel --bot0 .\bot_a.py --bot1 .\bot_b.py --games 100 --fixed-seats --bot0-seat 0
 ```

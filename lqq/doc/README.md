@@ -7,7 +7,7 @@
 - 棋盘为 9x9。
 - 蓝方从下方中点出发，目标是到达最上方任一格。
 - 红方从上方中点出发，目标是到达最下方任一格。
-- 每回合只能选择一种行动：向前、后、左、右移动一格，或放置一堵墙。
+- 每回合只能选择一种行动：向前、后、左、右移动一格，跳过同方向紧邻且后方无墙的对手，或放置一堵墙。
 - 墙为两格长，可横放或竖放。
 - 墙不能重叠、交叉，也不能让任一玩家完全没有到达目标边的路线。
 - 每方 10 堵墙，先到达对面底线者获胜。
@@ -31,6 +31,12 @@ python .\lqq_multi.py battle --bot .\bot.py --players 2 --games 1 --seed 1 --kee
 
 ```powershell
 python .\lqq_multi.py battle --bot .\bot.py --players 2 --games 100 --seed 1 --decision-timeout 2
+```
+
+两个任意路径 Bot 对战 1000 局：
+
+```powershell
+python .\lqq_multi.py duel --bot0 .\bot_a.py --bot1 .\bot_b.py --games 1000 --seed 1 --decision-timeout 2
 ```
 
 更多接口说明见 `BOT_API.md`。
