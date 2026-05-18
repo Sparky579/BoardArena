@@ -1,0 +1,559 @@
+from __future__ import annotations
+
+from collections import deque
+import time
+
+
+BOARD_SIZE = 9
+INF = 10**9
+SAFETY_SECONDS = 0.30
+
+MOVE_DELTAS = {
+    "MOVE_UP": (-1, 0),
+    "MOVE_DOWN": (1, 0),
+    "MOVE_LEFT": (0, -1),
+    "MOVE_RIGHT": (0, 1),
+}
+
+
+class SearchTimeout(Exception):
+    pass
+
+
+def wall_edges(direction, row, col):
+    if direction == "H":
+        return (("H", row, col), ("H", row, col + 1))
+    return (("V", row, col), ("V", row + 1, col))
+
+
+def opposite_wall_direction(direction):
+    return "V" if direction == "H" else "H"
+
+
+def parse_wall_action(action):
+    parts = action.split("_")
+    if len(parts) != 4 or parts[0] != "WALL" or parts[1] not in ("H", "V"):
+        return None
+    try:
+        return parts[1], int(parts[2]), int(parts[3])
+    except ValueError:
+        return None
+
+
+def in_bounds(row, col):
+    return 0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE
+
+
+def clamp_wall_origin(direction, row, col):
+    if direction == "H" and 0 <= row < BOARD_SIZE - 1 and 0 <= col < BOARD_SIZE - 1:
+        return True
+    if direction == "V" and 0 <= row < BOARD_SIZE - 1 and 0 <= col < BOARD_SIZE - 1:
+        return True
+    return False
+
+
+class MiniState:
+    __slots__ = (
+        "current",
+        "positions",
+        "goals",
+        "walls_remaining",
+        "walls",
+        "blocked_edges",
+        "turn",
+        "winner",
+        "_dist_cache",
+        "_path_cache",
+    )
+
+    def __init__(
+        self,
+        current,
+        positions,
+        goals,
+        walls_remaining,
+        walls,
+        blocked_edges,
+        turn,
+        winner=None,
+    ):
+        self.current = current
+        self.positions = positions
+        self.goals = goals
+        self.walls_remaining = walls_remaining
+        self.walls = walls
+        self.blocked_edges = blocked_edges
+        self.turn = turn
+        self.winner = winner
+        self._dist_cache = [None, None]
+        self._path_cache = [None, None]
+
+    @classmethod
+    def from_bot_state(cls, state):
+        walls = set()
+        blocked = set()
+        for item in state.get("walls", ()):
+            direction = item["dir"]
+            row = item["row"]
+            col = item["col"]
+            walls.add((direction, row, col))
+            blocked.update(wall_edges(direction, row, col))
+        current = int(state.get("actor", state.get("player_id", 0)))
+        return cls(
+            current=current,
+            positions=tuple((int(row), int(col)) for row, col in state["positions"]),
+            goals=tuple(int(goal) for goal in state["goal_rows"]),
+            walls_remaining=tuple(int(count) for count in state["walls_remaining"]),
+            walls=frozenset(walls),
+            blocked_edges=frozenset(blocked),
+            turn=int(state.get("turn", 0)),
+            winner=state.get("winner"),
+        )
+
+    def apply(self, action):
+        actor = self.current
+        positions = [list(pos) for pos in self.positions]
+        walls_remaining = list(self.walls_remaining)
+        walls = set(self.walls)
+        blocked = set(self.blocked_edges)
+        winner = None
+
+        if action in MOVE_DELTAS:
+            dr, dc = MOVE_DELTAS[action]
+            positions[actor][0] += dr
+            positions[actor][1] += dc
+            if positions[actor][0] == self.goals[actor]:
+                winner = actor
+        else:
+            parsed = parse_wall_action(action)
+            if parsed is None:
+                return self
+            direction, row, col = parsed
+            walls.add((direction, row, col))
+            blocked.update(wall_edges(direction, row, col))
+            walls_remaining[actor] -= 1
+
+        return MiniState(
+            current=1 - actor,
+            positions=tuple((row, col) for row, col in positions),
+            goals=self.goals,
+            walls_remaining=tuple(walls_remaining),
+            walls=frozenset(walls),
+            blocked_edges=frozenset(blocked),
+            turn=self.turn + 1,
+            winner=winner,
+        )
+
+    def legal_moves(self, player=None):
+        if player is None:
+            player = self.current
+        row, col = self.positions[player]
+        opp_row, opp_col = self.positions[1 - player]
+        result = []
+        for action, (dr, dc) in MOVE_DELTAS.items():
+            nr = row + dr
+            nc = col + dc
+            if not in_bounds(nr, nc):
+                continue
+            if nr == opp_row and nc == opp_col:
+                continue
+            if not self.has_wall_between(row, col, nr, nc):
+                result.append(action)
+        return result
+
+    def legal_actions_full(self):
+        if self.winner is not None:
+            return []
+        player = self.current
+        actions = self.legal_moves(player)
+        if self.walls_remaining[player] <= 0:
+            return actions
+
+        for row in range(BOARD_SIZE - 1):
+            for col in range(BOARD_SIZE - 1):
+                if self.is_wall_legal("H", row, col):
+                    actions.append(f"WALL_H_{row}_{col}")
+                if self.is_wall_legal("V", row, col):
+                    actions.append(f"WALL_V_{row}_{col}")
+        return actions
+
+    def has_wall_between(self, from_row, from_col, to_row, to_col):
+        if from_row == to_row:
+            return ("V", from_row, min(from_col, to_col)) in self.blocked_edges
+        if from_col == to_col:
+            return ("H", min(from_row, to_row), from_col) in self.blocked_edges
+        return True
+
+    def is_wall_legal(self, direction, row, col):
+        if not clamp_wall_origin(direction, row, col):
+            return False
+        if (direction, row, col) in self.walls:
+            return False
+        if (opposite_wall_direction(direction), row, col) in self.walls:
+            return False
+        edges = wall_edges(direction, row, col)
+        if any(edge in self.blocked_edges for edge in edges):
+            return False
+
+        blocked = set(self.blocked_edges)
+        blocked.update(edges)
+        return self.has_path_to_goal(0, blocked) and self.has_path_to_goal(1, blocked)
+
+    def has_path_to_goal(self, player, blocked_edges=None):
+        if blocked_edges is None:
+            blocked_edges = self.blocked_edges
+        start = self.positions[player]
+        goal = self.goals[player]
+        queue = deque([start])
+        seen = {start}
+
+        while queue:
+            row, col = queue.popleft()
+            if row == goal:
+                return True
+            for dr, dc in MOVE_DELTAS.values():
+                nr = row + dr
+                nc = col + dc
+                if not in_bounds(nr, nc):
+                    continue
+                if self.wall_between_with_edges(row, col, nr, nc, blocked_edges):
+                    continue
+                key = (nr, nc)
+                if key not in seen:
+                    seen.add(key)
+                    queue.append(key)
+        return False
+
+    def shortest_distance(self, player):
+        cached = self._dist_cache[player]
+        if cached is not None:
+            return cached
+        distance, path = self.shortest_path(player)
+        self._dist_cache[player] = distance
+        self._path_cache[player] = path
+        return distance
+
+    def shortest_path(self, player):
+        cached = self._path_cache[player]
+        if cached is not None:
+            return self._dist_cache[player], cached
+
+        start = self.positions[player]
+        goal = self.goals[player]
+        queue = deque([start])
+        parent = {start: None}
+
+        while queue:
+            row, col = queue.popleft()
+            if row == goal:
+                path = []
+                cur = (row, col)
+                while cur is not None:
+                    path.append(cur)
+                    cur = parent[cur]
+                path.reverse()
+                distance = len(path) - 1
+                self._dist_cache[player] = distance
+                self._path_cache[player] = path
+                return distance, path
+
+            for dr, dc in MOVE_DELTAS.values():
+                nr = row + dr
+                nc = col + dc
+                key = (nr, nc)
+                if not in_bounds(nr, nc):
+                    continue
+                if key in parent:
+                    continue
+                if self.has_wall_between(row, col, nr, nc):
+                    continue
+                parent[key] = (row, col)
+                queue.append(key)
+
+        self._dist_cache[player] = INF
+        self._path_cache[player] = []
+        return INF, []
+
+    @staticmethod
+    def wall_between_with_edges(from_row, from_col, to_row, to_col, blocked_edges):
+        if from_row == to_row:
+            return ("V", from_row, min(from_col, to_col)) in blocked_edges
+        if from_col == to_col:
+            return ("H", min(from_row, to_row), from_col) in blocked_edges
+        return True
+
+    def focused_wall_actions(self, actor):
+        if self.walls_remaining[actor] <= 0:
+            return []
+
+        result = set()
+        targets = [1 - actor, actor]
+        for target in targets:
+            _, path = self.shortest_path(target)
+            for index in range(min(len(path) - 1, 10)):
+                for action in walls_blocking_step(path[index], path[index + 1]):
+                    parsed = parse_wall_action(action)
+                    if parsed is None:
+                        continue
+                    direction, row, col = parsed
+                    if self.is_wall_legal(direction, row, col):
+                        result.add(action)
+        return list(result)
+
+
+def walls_blocking_step(a, b):
+    ar, ac = a
+    br, bc = b
+    result = []
+    if ac == bc:
+        row = min(ar, br)
+        for col in (ac - 1, ac):
+            if 0 <= row < BOARD_SIZE - 1 and 0 <= col < BOARD_SIZE - 1:
+                result.append(f"WALL_H_{row}_{col}")
+    elif ar == br:
+        col = min(ac, bc)
+        for row in (ar - 1, ar):
+            if 0 <= row < BOARD_SIZE - 1 and 0 <= col < BOARD_SIZE - 1:
+                result.append(f"WALL_V_{row}_{col}")
+    return result
+
+
+def edge_for_step(a, b):
+    ar, ac = a
+    br, bc = b
+    if ar == br:
+        return "V", ar, min(ac, bc)
+    return "H", min(ar, br), ac
+
+
+class Bot:
+    name = "gpt5_xhigh_lqq"
+
+    def choose_action(self, state):
+        legal = state.get("legal_actions", [])
+        if not legal:
+            return ""
+        try:
+            return self._choose_action(state, legal)
+        except Exception:
+            return self._fallback(state, legal)
+
+    def _choose_action(self, state, legal):
+        quick = self.quick_opening_action(state, legal)
+        if quick is not None:
+            return quick
+
+        self.deadline = time.perf_counter() + SAFETY_SECONDS
+        root = MiniState.from_bot_state(state)
+        me = root.current
+
+        for action in legal:
+            if action in MOVE_DELTAS:
+                child = root.apply(action)
+                if child.winner == me:
+                    return action
+
+        ranked = self.rank_actions(root, legal_actions=legal, root=True)
+        if not ranked:
+            return self._fallback(state, legal)
+        best_action = ranked[0]
+
+        for depth in (1, 2):
+            try:
+                value, action = self.search_root(root, me, legal, depth)
+                if action is not None:
+                    best_action = action
+                if abs(value) > 900000:
+                    break
+            except SearchTimeout:
+                break
+        return best_action if best_action in legal else self._fallback(state, legal)
+
+    def search_root(self, state, me, legal, depth):
+        self.check_time()
+        actions = self.rank_actions(state, legal_actions=legal, root=True)
+        best_value = -INF
+        best_action = None
+        alpha = -INF
+        beta = INF
+
+        for action in actions:
+            self.check_time()
+            value = self.minimax(state.apply(action), depth - 1, alpha, beta, me)
+            if value > best_value:
+                best_value = value
+                best_action = action
+            if value > alpha:
+                alpha = value
+        return best_value, best_action
+
+    def minimax(self, state, depth, alpha, beta, me):
+        self.check_time()
+        if state.winner is not None or depth <= 0:
+            return self.evaluate(state, me)
+
+        actions = self.rank_actions(state, root=False)
+        if not actions:
+            return 900000 if state.current != me else -900000
+
+        if state.current == me:
+            value = -INF
+            for action in actions:
+                value = max(value, self.minimax(state.apply(action), depth - 1, alpha, beta, me))
+                alpha = max(alpha, value)
+                if alpha >= beta:
+                    break
+            return value
+
+        value = INF
+        for action in actions:
+            value = min(value, self.minimax(state.apply(action), depth - 1, alpha, beta, me))
+            beta = min(beta, value)
+            if alpha >= beta:
+                break
+        return value
+
+    def rank_actions(self, state, legal_actions=None, root=False):
+        actor = state.current
+        if legal_actions is None:
+            move_actions = state.legal_moves(actor)
+            wall_actions = state.focused_wall_actions(actor)
+            legal_actions = move_actions + wall_actions
+
+        moves = []
+        walls = []
+        for action in legal_actions:
+            if action in MOVE_DELTAS:
+                moves.append(action)
+            elif action.startswith("WALL_"):
+                walls.append(action)
+
+        scored_moves = [(self.score_action(state, action, actor), action) for action in moves]
+        scored_walls = [(self.score_action(state, action, actor), action) for action in walls]
+        scored_moves.sort(reverse=True)
+        scored_walls.sort(reverse=True)
+
+        wall_limit = 20 if root else 8
+        if state.shortest_distance(1 - actor) <= 2:
+            wall_limit += 8
+        if state.shortest_distance(actor) <= 2 and state.shortest_distance(actor) <= state.shortest_distance(1 - actor):
+            wall_limit = max(6, wall_limit // 2)
+
+        ordered = [action for _, action in scored_moves]
+        ordered.extend(action for _, action in scored_walls[:wall_limit])
+
+        limit = 24 if root else 12
+        return ordered[:limit]
+
+    def score_action(self, state, action, actor):
+        child = state.apply(action)
+        if child.winner == actor:
+            return 1000000
+
+        score = self.evaluate(child, actor)
+        if action in MOVE_DELTAS:
+            before = state.shortest_distance(actor)
+            after = child.shortest_distance(actor)
+            score += 18.0 * (before - after)
+            row, col = child.positions[actor]
+            score += 0.15 * (4 - abs(col - 4))
+            if after > before:
+                score -= 15.0
+            return score
+
+        opponent = 1 - actor
+        opp_gain = child.shortest_distance(opponent) - state.shortest_distance(opponent)
+        self_cost = child.shortest_distance(actor) - state.shortest_distance(actor)
+        score += 32.0 * opp_gain - 18.0 * self_cost - 2.2
+        if opp_gain <= 0:
+            score -= 20.0
+        if state.shortest_distance(opponent) <= state.shortest_distance(actor):
+            score += 8.0 * max(0, opp_gain)
+        score += self.wall_path_tiebreak(state, action, actor)
+        return score
+
+    def wall_path_tiebreak(self, state, action, actor):
+        parsed = parse_wall_action(action)
+        if parsed is None:
+            return 0.0
+        edges = set(wall_edges(*parsed))
+        opponent = 1 - actor
+        bonus = 0.0
+
+        _, opp_path = state.shortest_path(opponent)
+        for index in range(len(opp_path) - 1):
+            if edge_for_step(opp_path[index], opp_path[index + 1]) in edges:
+                bonus += max(0.0, 5.0 - 0.45 * index)
+                break
+
+        _, own_path = state.shortest_path(actor)
+        for index in range(len(own_path) - 1):
+            if edge_for_step(own_path[index], own_path[index + 1]) in edges:
+                bonus -= max(0.0, 2.0 - 0.25 * index)
+                break
+
+        return bonus
+
+    def evaluate(self, state, player):
+        if state.winner is not None:
+            if state.winner == player:
+                return 1000000 - state.turn
+            return -1000000 + state.turn
+
+        opponent = 1 - player
+        my_dist = state.shortest_distance(player)
+        opp_dist = state.shortest_distance(opponent)
+        my_race = 2 * my_dist - (1 if state.current == player else 0)
+        opp_race = 2 * opp_dist - (1 if state.current == opponent else 0)
+
+        score = 24.0 * (opp_race - my_race)
+        score += 1.2 * (state.walls_remaining[player] - state.walls_remaining[opponent])
+
+        if my_race < opp_race:
+            score += 6.0
+        elif my_race > opp_race:
+            score -= 6.0
+
+        if my_dist <= 2:
+            score += 18.0 * (3 - my_dist)
+        if opp_dist <= 2:
+            score -= 18.0 * (3 - opp_dist)
+
+        my_col = state.positions[player][1]
+        opp_col = state.positions[opponent][1]
+        score += 0.2 * (4 - abs(my_col - 4))
+        score -= 0.1 * (4 - abs(opp_col - 4))
+        return score
+
+    def check_time(self):
+        if time.perf_counter() >= self.deadline:
+            raise SearchTimeout
+
+    @staticmethod
+    def quick_opening_action(state, legal):
+        if state.get("walls"):
+            return None
+        player_id = state.get("actor", state.get("player_id", 0))
+        opponent = 1 - player_id
+        row = state["positions"][player_id][0]
+        opp_row = state["positions"][opponent][0]
+        if abs(row - opp_row) <= 1:
+            return None
+        goal = state["goal_rows"][player_id]
+        forward = "MOVE_UP" if goal < row else "MOVE_DOWN"
+        if forward in legal:
+            return forward
+        return None
+
+    @staticmethod
+    def _fallback(state, legal):
+        player_id = state.get("player_id", state.get("actor", 0))
+        row = state["positions"][player_id][0]
+        goal = state["goal_rows"][player_id]
+        forward = "MOVE_UP" if goal < row else "MOVE_DOWN"
+        if forward in legal:
+            return forward
+        for action in legal:
+            if action.startswith("MOVE_"):
+                return action
+        return legal[0]
