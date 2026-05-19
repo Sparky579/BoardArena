@@ -26,6 +26,9 @@ DEFAULT_BOTS = {
     "/gpt5p5/bot_easy": HERE.parent / "baseline" / "gpt5p5" / "bot_easy.py",
     "/gpt5p5/bot_medium": HERE.parent / "baseline" / "gpt5p5" / "bot_medium.py",
     "/gpt5p5/bot_hard": HERE.parent / "baseline" / "gpt5p5" / "bot_hard.py",
+    "/claude_opus4p7/bot_easy": HERE.parent / "baseline" / "claude_opus4p7" / "bot_easy.py",
+    "/claude_opus4p7/bot_medium": HERE.parent / "baseline" / "claude_opus4p7" / "bot_medium.py",
+    "/claude_opus4p7/bot_hard": HERE.parent / "baseline" / "claude_opus4p7" / "bot_hard.py",
 }
 DEFAULT_BOT_ID = "/gpt5p5/bot_hard"
 STATIC_TYPES = {
