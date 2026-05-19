@@ -13,6 +13,17 @@ MOVE_DELTAS = {
     "MOVE_DOWN": (1, 0),
     "MOVE_LEFT": (0, -1),
     "MOVE_RIGHT": (0, 1),
+    "MOVE_UP_LEFT": (-1, -1),
+    "MOVE_UP_RIGHT": (-1, 1),
+    "MOVE_DOWN_LEFT": (1, -1),
+    "MOVE_DOWN_RIGHT": (1, 1),
+}
+
+CARDINAL_MOVE_DELTAS = {
+    "MOVE_UP": (-1, 0),
+    "MOVE_DOWN": (1, 0),
+    "MOVE_LEFT": (0, -1),
+    "MOVE_RIGHT": (0, 1),
 }
 
 
@@ -181,6 +192,10 @@ class MiniState:
         row, col = self.positions[player]
         opp_row, opp_col = self.positions[1 - player]
         dr, dc = MOVE_DELTAS[action]
+
+        if dr != 0 and dc != 0:
+            return self.side_jump_destination(row, col, opp_row, opp_col, dr, dc)
+
         nr = row + dr
         nc = col + dc
 
@@ -198,6 +213,25 @@ class MiniState:
         if self.has_wall_between(opp_row, opp_col, jump_row, jump_col):
             return None
         return jump_row, jump_col
+
+    def side_jump_destination(self, row, col, opp_row, opp_col, dr, dc):
+        if abs(row - opp_row) + abs(col - opp_col) != 1:
+            return None
+
+        toward_row = opp_row - row
+        toward_col = opp_col - col
+        if dr != toward_row and dc != toward_col:
+            return None
+        if self.has_wall_between(row, col, opp_row, opp_col):
+            return None
+
+        nr = row + dr
+        nc = col + dc
+        if not in_bounds(nr, nc):
+            return None
+        if self.has_wall_between(opp_row, opp_col, nr, nc):
+            return None
+        return nr, nc
 
     def is_wall_legal(self, direction, row, col):
         if not clamp_wall_origin(direction, row, col):
@@ -286,7 +320,7 @@ class MiniState:
     def path_neighbors(self, player, row, col):
         result = []
         opp_row, opp_col = self.positions[1 - player]
-        for dr, dc in MOVE_DELTAS.values():
+        for dr, dc in CARDINAL_MOVE_DELTAS.values():
             nr = row + dr
             nc = col + dc
             if not in_bounds(nr, nc):

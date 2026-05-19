@@ -19,6 +19,10 @@ const moveActions = {
   MOVE_DOWN: [1, 0],
   MOVE_LEFT: [0, -1],
   MOVE_RIGHT: [0, 1],
+  MOVE_UP_LEFT: [-1, -1],
+  MOVE_UP_RIGHT: [-1, 1],
+  MOVE_DOWN_LEFT: [1, -1],
+  MOVE_DOWN_RIGHT: [1, 1],
 };
 
 async function api(path, payload) {
@@ -214,6 +218,11 @@ function moveTarget(action, placedEdges) {
   const opponent = 1 - actor;
   const [row, col] = state.positions[actor];
   const [oppRow, oppCol] = state.positions[opponent];
+
+  if (dr !== 0 && dc !== 0) {
+    return sideJumpTarget(row, col, oppRow, oppCol, dr, dc, placedEdges);
+  }
+
   const nextRow = row + dr;
   const nextCol = col + dc;
 
@@ -228,6 +237,21 @@ function moveTarget(action, placedEdges) {
   if (!inBounds(jumpRow, jumpCol)) return null;
   if (hasWallBetween(oppRow, oppCol, jumpRow, jumpCol, placedEdges)) return null;
   return { row: jumpRow, col: jumpCol };
+}
+
+function sideJumpTarget(row, col, oppRow, oppCol, dr, dc, placedEdges) {
+  if (Math.abs(row - oppRow) + Math.abs(col - oppCol) !== 1) return null;
+
+  const towardRow = oppRow - row;
+  const towardCol = oppCol - col;
+  if (dr !== towardRow && dc !== towardCol) return null;
+  if (hasWallBetween(row, col, oppRow, oppCol, placedEdges)) return null;
+
+  const targetRow = row + dr;
+  const targetCol = col + dc;
+  if (!inBounds(targetRow, targetCol)) return null;
+  if (hasWallBetween(oppRow, oppCol, targetRow, targetCol, placedEdges)) return null;
+  return { row: targetRow, col: targetCol };
 }
 
 function inBounds(row, col) {

@@ -95,6 +95,10 @@ function legalMoves(playerIndex = state.current) {
     [1, 0],
     [0, -1],
     [0, 1],
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
   ];
 
   return deltas
@@ -105,6 +109,11 @@ function legalMoves(playerIndex = state.current) {
 function moveDestination(playerIndex, dr, dc) {
   const player = state.players[playerIndex];
   const opponent = state.players[1 - playerIndex];
+
+  if (dr !== 0 && dc !== 0) {
+    return sideJumpDestination(player, opponent, dr, dc);
+  }
+
   const row = player.row + dr;
   const col = player.col + dc;
 
@@ -119,6 +128,21 @@ function moveDestination(playerIndex, dr, dc) {
   if (!inBounds(jumpRow, jumpCol)) return null;
   if (hasWallBetween(opponent.row, opponent.col, jumpRow, jumpCol)) return null;
   return { row: jumpRow, col: jumpCol };
+}
+
+function sideJumpDestination(player, opponent, dr, dc) {
+  if (Math.abs(player.row - opponent.row) + Math.abs(player.col - opponent.col) !== 1) return null;
+
+  const towardRow = opponent.row - player.row;
+  const towardCol = opponent.col - player.col;
+  if (dr !== towardRow && dc !== towardCol) return null;
+  if (hasWallBetween(player.row, player.col, opponent.row, opponent.col)) return null;
+
+  const row = player.row + dr;
+  const col = player.col + dc;
+  if (!inBounds(row, col)) return null;
+  if (hasWallBetween(opponent.row, opponent.col, row, col)) return null;
+  return { row, col };
 }
 
 function movePlayer(row, col) {

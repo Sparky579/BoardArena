@@ -32,6 +32,17 @@ MOVE_DELTAS = {
     "MOVE_DOWN": (1, 0),
     "MOVE_LEFT": (0, -1),
     "MOVE_RIGHT": (0, 1),
+    "MOVE_UP_LEFT": (-1, -1),
+    "MOVE_UP_RIGHT": (-1, 1),
+    "MOVE_DOWN_LEFT": (1, -1),
+    "MOVE_DOWN_RIGHT": (1, 1),
+}
+
+CARDINAL_MOVE_DELTAS = {
+    "MOVE_UP": (-1, 0),
+    "MOVE_DOWN": (1, 0),
+    "MOVE_LEFT": (0, -1),
+    "MOVE_RIGHT": (0, 1),
 }
 
 _MATCH_LOGS: dict[str, list[str]] = {}
@@ -179,7 +190,7 @@ class GameState:
 
     def _path_neighbors(self, row: int, col: int) -> list[tuple[int, int]]:
         result: list[tuple[int, int]] = []
-        for dr, dc in MOVE_DELTAS.values():
+        for dr, dc in CARDINAL_MOVE_DELTAS.values():
             next_row = row + dr
             next_col = col + dc
             if self._in_bounds(next_row, next_col) and not self._has_wall_between(row, col, next_row, next_col):
@@ -187,9 +198,15 @@ class GameState:
         return result
 
     def _move_destination(self, player_id: int, action: str) -> tuple[int, int] | None:
+        if action not in MOVE_DELTAS:
+            return None
         player = self.players[player_id]
         opponent = self.players[1 - player_id]
         dr, dc = MOVE_DELTAS[action]
+
+        if dr != 0 and dc != 0:
+            return self._side_jump_destination(player, opponent, dr, dc)
+
         row = player.row + dr
         col = player.col + dc
 
@@ -207,6 +224,31 @@ class GameState:
         if self._has_wall_between(opponent.row, opponent.col, jump_row, jump_col):
             return None
         return jump_row, jump_col
+
+    def _side_jump_destination(
+        self,
+        player: PlayerState,
+        opponent: PlayerState,
+        dr: int,
+        dc: int,
+    ) -> tuple[int, int] | None:
+        if abs(player.row - opponent.row) + abs(player.col - opponent.col) != 1:
+            return None
+
+        toward_row = opponent.row - player.row
+        toward_col = opponent.col - player.col
+        if dr != toward_row and dc != toward_col:
+            return None
+        if self._has_wall_between(player.row, player.col, opponent.row, opponent.col):
+            return None
+
+        row = player.row + dr
+        col = player.col + dc
+        if not self._in_bounds(row, col):
+            return None
+        if self._has_wall_between(opponent.row, opponent.col, row, col):
+            return None
+        return row, col
 
     def _has_wall_between(self, from_row: int, from_col: int, to_row: int, to_col: int) -> bool:
         if from_row == to_row:
