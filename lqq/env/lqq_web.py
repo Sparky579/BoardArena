@@ -296,10 +296,11 @@ def discover_bot_paths() -> dict[str, Path]:
             continue
         bot_paths[bot_id_for_path(path)] = path
 
-    for path in sorted(BASELINE_DIR.rglob("bot.py")):
-        if "__pycache__" in path.parts:
-            continue
-        bot_paths[bot_id_for_path(path)] = path
+    for pattern in ("bot.py", "bot_*.py"):
+        for path in sorted(BASELINE_DIR.rglob(pattern)):
+            if "__pycache__" in path.parts:
+                continue
+            bot_paths[bot_id_for_path(path)] = path
 
     return bot_paths
 
