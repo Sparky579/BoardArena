@@ -373,7 +373,7 @@ class Engine:
         race1 = 2 * d1 - (1 if turn == 1 else 0)
 
         score_p0 = (race1 - race0) * 24
-        score_p0 += (w0 - w1) * 18
+        score_p0 += (w0 - w1) * 24
 
         if race0 < race1:
             score_p0 += 8
