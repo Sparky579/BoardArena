@@ -59,6 +59,26 @@ async function newGame() {
   });
 }
 
+async function changeBot() {
+  if (modeEl.value === "human-human") {
+    renderControls();
+    return;
+  }
+  if (!state) {
+    await newGame();
+    return;
+  }
+  await runAction(async () => {
+    renderBusy("Switching bot...");
+    state = await api("/api/bot", {
+      session: state.session,
+      bot: botEl.value,
+    });
+    render();
+    await advanceIfNeeded();
+  });
+}
+
 async function submitAction(action) {
   if (!state || !state.human_turn) return;
   await runAction(async () => {
@@ -337,6 +357,7 @@ newGameEl.addEventListener("click", newGame);
 modeEl.addEventListener("change", () => {
   renderControls();
 });
+botEl.addEventListener("change", changeBot);
 boardEl.addEventListener("pointerleave", () => {
   boardEl.querySelectorAll(".preview").forEach((element) => element.classList.remove("preview"));
 });

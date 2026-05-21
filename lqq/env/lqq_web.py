@@ -58,6 +58,21 @@ class GameSession:
             bot_seat = 1 - human_seat
             self.bots[bot_seat] = load_bot(bot_path) if bot_path.exists() else SystemBot(self.rng)
 
+    def set_bot(self, bot_id: str, bot_path: Path) -> None:
+        if self.mode != "human-bot":
+            raise ValueError("bot can only be changed in human-bot mode")
+        bot_seat = next(seat for seat in (0, 1) if seat not in self.human_seats)
+        self.bot_id = bot_id
+        self.bots[bot_seat] = load_bot(bot_path) if bot_path.exists() else SystemBot(self.rng)
+        self.log.append(
+            {
+                "turn": self.env.game.turn,
+                "seat": bot_seat,
+                "action": "",
+                "text": f"Player {bot_seat + 1} bot changed to {bot_id}",
+            }
+        )
+
     def apply_human_action(self, action: str) -> None:
         if self.forfeit is not None:
             return
@@ -230,6 +245,18 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 session.apply_human_action(str(data.get("action", "")))
                 self.send_json(session.view(str(data.get("session", ""))))
+                return
+            if self.path == "/api/bot":
+                session_id = str(data.get("session", ""))
+                session = self.server.sessions.get(session_id)
+                if not session:
+                    self.send_error_json("session not found", HTTPStatus.NOT_FOUND)
+                    return
+                bot_id = str(data.get("bot", session.bot_id))
+                if bot_id not in self.server.bot_paths:
+                    raise ValueError(f"unknown bot: {bot_id}")
+                session.set_bot(bot_id, self.server.bot_paths[bot_id])
+                self.send_json(session.view(session_id))
                 return
             if self.path == "/api/advance":
                 session = self.server.sessions.get(str(data.get("session", "")))
