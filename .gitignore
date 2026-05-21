@@ -17,6 +17,8 @@ env/
 !Othello/env/**
 !go_9x9/env/
 !go_9x9/env/**
+!gomoku/env/
+!gomoku/env/**
 
 **/__pycache__/
 **/__pycache__/**
