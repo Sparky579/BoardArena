@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BoardArena 9x9 Go</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="board-area" aria-label="九路围棋棋盘">
+      <div class="top-bar">
+        <div>
+          <h1>九路围棋</h1>
+          <p id="statusText" class="status-text">准备开始</p>
+        </div>
+        <div class="top-actions">
+          <button id="flipBtn" class="icon-button" type="button" aria-label="翻转棋盘" title="翻转棋盘">↕</button>
+          <button id="newGameBtn" class="text-button" type="button">新局</button>
+        </div>
+      </div>
+
+      <div id="board" class="board" aria-label="9乘9棋盘"></div>
+    </section>
+
+    <aside class="side-panel" aria-label="对局信息">
+      <div class="control-group">
+        <span class="control-label">模式</span>
+        <div class="segmented" role="group" aria-label="模式">
+          <button id="humanBotBtn" type="button" class="selected" aria-pressed="true">人机</button>
+          <button id="humanHumanBtn" type="button" aria-pressed="false">人人</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">人类执子</span>
+        <div class="segmented" role="group" aria-label="人类执子">
+          <button id="blackSeatBtn" type="button" class="selected" aria-pressed="true">黑</button>
+          <button id="whiteSeatBtn" type="button" aria-pressed="false">白</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">Bot</span>
+        <select id="botSelect" class="select-control" aria-label="Bot">
+          <option value="/gpt5p5/bot_easy">/gpt5p5/bot_easy</option>
+          <option value="/gpt5p5/bot_hard" selected>/gpt5p5/bot_hard</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">棋盘方向</span>
+        <select id="orientationSelect" class="select-control" aria-label="棋盘方向">
+          <option value="black" selected>黑方视角</option>
+          <option value="white">白方视角</option>
+        </select>
+      </div>
+
+      <div class="score-panel">
+        <article id="blackPlayer" class="player-row">
+          <span class="stone-mark black" aria-hidden="true"></span>
+          <strong>黑方</strong>
+          <span id="blackType" class="player-type">人类</span>
+          <span id="blackScore" class="score">0.0</span>
+        </article>
+        <article id="whitePlayer" class="player-row">
+          <span class="stone-mark white" aria-hidden="true"></span>
+          <strong>白方</strong>
+          <span id="whiteType" class="player-type">Bot</span>
+          <span id="whiteScore" class="score">6.5</span>
+        </article>
+      </div>
+
+      <button id="passBtn" class="pass-button" type="button">Pass</button>
+
+      <div class="board-panel">
+        <h2>棋盘</h2>
+        <pre id="boardText"></pre>
+      </div>
+
+      <div class="log-panel">
+        <h2>记录</h2>
+        <ol id="moveLog" class="move-log"></ol>
+      </div>
+    </aside>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
+

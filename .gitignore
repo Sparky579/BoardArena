@@ -15,6 +15,8 @@ env/
 !skull/env/**
 !Othello/env/
 !Othello/env/**
+!go_9x9/env/
+!go_9x9/env/**
 
 **/__pycache__/
 **/__pycache__/**
