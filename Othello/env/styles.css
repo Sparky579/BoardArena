@@ -1,0 +1,376 @@
+:root {
+  color-scheme: light;
+  --bg: #eef1f4;
+  --panel: #ffffff;
+  --text: #19211e;
+  --muted: #62706b;
+  --line: #cbd4d1;
+  --board-line: #0d3e2c;
+  --board-light: #17865b;
+  --board-dark: #12724f;
+  --accent: #c84f38;
+  --accent-2: #2563a6;
+  --gold: #d8a529;
+  font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(360px, 720px) minmax(280px, 360px);
+  gap: 24px;
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+.board-area,
+.side-panel {
+  min-width: 0;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+h1,
+h2,
+p,
+pre {
+  margin: 0;
+}
+
+h1 {
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+h2 {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.status-text {
+  margin-top: 6px;
+  min-height: 22px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.top-actions,
+.score-panel,
+.player-row {
+  display: flex;
+  align-items: center;
+}
+
+.top-actions {
+  gap: 8px;
+}
+
+.icon-button,
+.text-button,
+.segmented button,
+.select-control,
+.pass-button {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+}
+
+button,
+.select-control {
+  cursor: pointer;
+}
+
+.icon-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 20px;
+}
+
+.text-button,
+.pass-button {
+  min-height: 40px;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-weight: 800;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  width: min(100%, calc(100vh - 110px));
+  max-width: 720px;
+  aspect-ratio: 1;
+  border: 3px solid var(--board-line);
+  background: var(--board-line);
+  box-shadow: 0 16px 40px rgba(20, 40, 35, 0.18);
+}
+
+.square {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid rgba(7, 46, 32, 0.72);
+  padding: 0;
+  aspect-ratio: 1;
+  background: var(--board-light);
+  cursor: default;
+  overflow: hidden;
+}
+
+.square:nth-child(16n + 2),
+.square:nth-child(16n + 4),
+.square:nth-child(16n + 6),
+.square:nth-child(16n + 8),
+.square:nth-child(16n + 9),
+.square:nth-child(16n + 11),
+.square:nth-child(16n + 13),
+.square:nth-child(16n + 15) {
+  background: var(--board-dark);
+}
+
+.square:focus {
+  outline: none;
+}
+
+.square:focus-visible {
+  outline: 3px solid #f6d56b;
+  outline-offset: -3px;
+}
+
+.square.legal {
+  cursor: pointer;
+}
+
+.square.legal::before {
+  content: "";
+  position: absolute;
+  inset: 16%;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.65);
+  pointer-events: none;
+}
+
+.square.last::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 3px solid var(--gold);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.disc,
+.hint,
+.disc-mark {
+  display: block;
+  border-radius: 50%;
+}
+
+.disc {
+  position: relative;
+  z-index: 2;
+  width: 72%;
+  height: 72%;
+  box-shadow: 0 9px 18px rgba(0, 0, 0, 0.28);
+}
+
+.disc.black,
+.disc-mark.black {
+  background: radial-gradient(circle at 35% 28%, #4a4f4b 0, #101413 48%, #030504 100%);
+}
+
+.disc.white,
+.disc-mark.white {
+  background: radial-gradient(circle at 35% 28%, #ffffff 0, #f4f1e6 56%, #bfc5c0 100%);
+}
+
+.hint {
+  position: relative;
+  z-index: 1;
+  width: 22%;
+  height: 22%;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.hint.black {
+  background: rgba(16, 20, 19, 0.45);
+}
+
+.coord {
+  position: absolute;
+  z-index: 3;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 11px;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.coord.file {
+  right: 5px;
+  bottom: 3px;
+}
+
+.coord.rank {
+  left: 5px;
+  top: 3px;
+}
+
+.side-panel {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.control-group,
+.score-panel,
+.board-panel,
+.log-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.control-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.segmented button {
+  min-height: 36px;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.segmented button.selected {
+  border-color: var(--accent-2);
+  background: var(--accent-2);
+  color: #fff;
+}
+
+.select-control {
+  width: 100%;
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 36px 0 12px;
+  font: inherit;
+  font-weight: 700;
+}
+
+.select-control:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.score-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: 28px auto 1fr auto;
+  gap: 10px;
+  min-height: 42px;
+  align-items: center;
+}
+
+.player-row.active {
+  color: var(--accent);
+}
+
+.disc-mark {
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+}
+
+.player-type {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score {
+  min-width: 32px;
+  text-align: right;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.pass-button {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.pass-button[hidden] {
+  display: none;
+}
+
+.board-panel pre {
+  margin-top: 8px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.move-log {
+  max-height: 260px;
+  margin: 10px 0 0;
+  padding-left: 22px;
+  overflow: auto;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .board {
+    width: 100%;
+  }
+}

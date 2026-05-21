@@ -14,7 +14,8 @@ Othello/
 │   └── styles.css
 ├── baseline/
 │   └── gpt5p5/
-│       └── bot_easy.py
+│       ├── bot_easy.py
+│       └── bot_hard.py
 └── doc/
     ├── README.md
     ├── GAME_RULE.md
@@ -64,8 +65,10 @@ python BoardArena/Othello/env/othello_web.py --port 8031
 可切换人人对战或人机对战。人机对战默认使用：
 
 ```text
-BoardArena/Othello/baseline/gpt5p5/bot_easy.py
+BoardArena/Othello/baseline/gpt5p5/bot_hard.py
 ```
+
+右侧下拉框可以选择 `/gpt5p5/bot_easy` 或 `/gpt5p5/bot_hard`。
 
 ## Bot 对战
 
@@ -79,6 +82,12 @@ python BoardArena/Othello/env/othello_env.py battle --bot BoardArena/Othello/bas
 
 ```bash
 python BoardArena/Othello/env/othello_env.py battle --bot BoardArena/Othello/baseline/gpt5p5/bot_easy.py --games 100 --seed 1
+```
+
+Hard bot 建议配合 2 秒单步限制运行：
+
+```bash
+python BoardArena/Othello/env/othello_env.py battle --bot BoardArena/Othello/baseline/gpt5p5/bot_hard.py --games 10 --seed 1 --decision-timeout 2
 ```
 
 限制单步决策最多 2 秒：
@@ -97,4 +106,3 @@ python BoardArena/Othello/env/othello_env.py sample-bot --output BoardArena/Othe
 
 - `doc/GAME_RULE.md`
 - `doc/BOT_API.md`
-

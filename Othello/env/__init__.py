@@ -1,0 +1,2 @@
+"""BoardArena Othello environment package."""
+

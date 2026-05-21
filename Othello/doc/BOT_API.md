@@ -97,6 +97,8 @@ class Bot:
 
 ## Python API
 
+内置 baseline 包含 `baseline/gpt5p5/bot_easy.py` 和 `baseline/gpt5p5/bot_hard.py`。`bot_hard.py` 是纯 CPU 传统搜索 bot，内部按 2 秒单步限制预留余量。
+
 ### Gym 风格环境
 
 ```python

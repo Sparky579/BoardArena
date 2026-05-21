@@ -13,6 +13,8 @@ env/
 !nimmt/env/**
 !skull/env/
 !skull/env/**
+!Othello/env/
+!Othello/env/**
 
 **/__pycache__/
 **/__pycache__/**

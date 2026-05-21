@@ -163,7 +163,7 @@ python .\Othello\env\othello_web.py
 
 不要直接用 Live Server 打开 `Othello\env\index.html`，该页面依赖 `othello_web.py` 提供的本地 JSON API。
 如果默认端口被占用，服务会自动尝试后续端口，也可以传入 `--port 8031`。
-人机模式右侧可选择 `/gpt5p5/bot_easy`。
+人机模式右侧可选择 `/gpt5p5/bot_easy` 或 `/gpt5p5/bot_hard`。
 
 运行单局 Bot 对战：
 
@@ -175,6 +175,12 @@ python .\Othello\env\othello_env.py battle --bot .\Othello\baseline\gpt5p5\bot_e
 
 ```powershell
 python .\Othello\env\othello_env.py battle --bot .\Othello\baseline\gpt5p5\bot_easy.py --games 100 --seed 1
+```
+
+运行 hard bot 时建议设置 2 秒单步限制：
+
+```powershell
+python .\Othello\env\othello_env.py battle --bot .\Othello\baseline\gpt5p5\bot_hard.py --games 10 --seed 1 --decision-timeout 2
 ```
 
 更多说明见：
