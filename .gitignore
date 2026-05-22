@@ -19,6 +19,8 @@ env/
 !go_9x9/env/**
 !gomoku/env/
 !gomoku/env/**
+!uno/env/
+!uno/env/**
 
 **/__pycache__/
 **/__pycache__/**

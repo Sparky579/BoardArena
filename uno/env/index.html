@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BoardArena UNO</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <section class="table">
+      <div class="topbar">
+        <div>
+          <h1>UNO</h1>
+          <p id="status">Loading</p>
+        </div>
+        <div class="controls">
+          <select id="mode">
+            <option value="human-human">Human vs Human</option>
+            <option value="human-bot" selected>Human vs Bot</option>
+          </select>
+          <select id="seat">
+            <option value="0" selected>Seat 0</option>
+            <option value="1">Seat 1</option>
+          </select>
+          <select id="bot"></select>
+          <button id="newGame" type="button">New</button>
+        </div>
+      </div>
+
+      <div class="scorebar">
+        <div class="score"><span>Player 0</span><strong id="p0Count">0</strong></div>
+        <div class="score"><span>Draw</span><strong id="drawCount">0</strong></div>
+        <div class="score"><span>Player 1</span><strong id="p1Count">0</strong></div>
+      </div>
+
+      <div class="center">
+        <div id="discard" class="uno-card large red">?</div>
+        <div class="color-box">
+          <span>Color</span>
+          <strong id="currentColor">red</strong>
+        </div>
+        <button id="drawButton" type="button" disabled>Draw</button>
+        <button id="passButton" type="button" disabled>Pass</button>
+      </div>
+
+      <div id="hand" class="hand"></div>
+    </section>
+
+    <aside class="side">
+      <h2>Log</h2>
+      <div id="log" class="log"></div>
+    </aside>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
+
