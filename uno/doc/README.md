@@ -1,12 +1,11 @@
 # BoardArena UNO
 
-这是 BoardArena 的二人 UNO 子项目，包含纯 Python 规则环境、Bot 对战裁判、批量评测接口、本地浏览器对战 UI 和 Tkinter 人机对战 UI。
+这是 BoardArena 的二人 UNO 子项目，包含纯 Python 规则环境、Bot 对战裁判、批量评测接口和本地浏览器对战 UI。
 
 ## 目录结构
 
 ```text
 uno/
-├── uno_ui.py
 ├── env/
 │   ├── uno_env.py
 │   ├── uno_web.py
@@ -85,22 +84,6 @@ BoardArena/uno/baseline/gpt/bot_hard.py
 ```
 
 `bot_hard.py` 使用自包含的 determinized MCTS：每次行动会按公开信息随机补全隐藏手牌和摸牌堆，在多个模拟世界中评估候选动作；根节点先按 UNO 二人局的强制牌优先级收窄候选，再用搜索修正颜色和同级动作选择。
-
-## Python 桌面 UI
-
-启动 Tkinter 人机对战界面：
-
-```bash
-python BoardArena/uno/uno_ui.py
-```
-
-可指定人类座位、随机种子和 bot：
-
-```bash
-python BoardArena/uno/uno_ui.py --human-seat 1 --seed 1 --bot /gpt/bot_hard
-```
-
-该界面只在 `uno/` 子项目内工作，使用 `uno/env/uno_env.py` 作为规则裁判，默认从 `uno/baseline/` 自动发现可用 bot。
 
 ## Bot 对战
 
