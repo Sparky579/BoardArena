@@ -23,8 +23,9 @@ HERE = Path(__file__).resolve().parent
 DEFAULT_BOTS = {
     "/gpt5p5/bot_easy": HERE.parent / "baseline" / "gpt5p5" / "bot_easy.py",
     "/gpt5p5/bot_hard": HERE.parent / "baseline" / "gpt5p5" / "bot_hard.py",
+    "/claude_opus4p7/bot_hard": HERE.parent / "baseline" / "claude_opus4p7" / "bot_hard.py",
 }
-DEFAULT_BOT_ID = "/gpt5p5/bot_hard"
+DEFAULT_BOT_ID = "/claude_opus4p7/bot_hard"
 STATIC_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
@@ -62,6 +63,37 @@ class GameSession:
         if mode == "human-bot":
             bot_seat = 1 - human_seat
             self.bots[bot_seat] = load_bot(bot_path) if bot_path.exists() else SystemBot(self.rng)
+
+    def resign(self) -> None:
+        """Human resigns. The opponent (the bot side, or the other human in
+        human-human) is declared winner and the session is marked over."""
+        if self.forfeit is not None or self.env.actor is None:
+            return
+        actor = self.env.actor
+        # In human-human mode we treat whoever is to move as the resigning
+        # human. In human-bot mode the resigner is the human seat.
+        if actor not in self.human_seats:
+            raise ValueError("现在不是人类玩家回合")
+        winner = 1 - actor
+        self.forfeit = {
+            "winner": winner,
+            "status": "resign",
+            "error": None,
+        }
+        side = SIDE_LABELS[actor]
+        self.log.append({
+            "ply": self.env.plies,
+            "seat": actor,
+            "action": "RESIGN",
+            "text": f"{side}: 认输",
+        })
+        winner_side = SIDE_LABELS[winner]
+        self.log.append({
+            "ply": self.env.plies,
+            "seat": winner,
+            "action": "",
+            "text": f"结束: {winner_side}胜（对方认输）",
+        })
 
     def apply_human_action(self, action: str) -> None:
         if self.forfeit is not None:
@@ -148,9 +180,13 @@ class GameSession:
         scores = state["scores"]
         if state["phase"] == "game_over":
             winner = state["winner"]
+            status = state.get("status")
             if winner is None:
                 return f"平局，黑 {scores[0]:.1f} : 白 {scores[1]:.1f}"
-            return f"{SIDE_LABELS[winner]}获胜，黑 {scores[0]:.1f} : 白 {scores[1]:.1f}"
+            base = f"{SIDE_LABELS[winner]}获胜"
+            if status == "resign":
+                base += "（对方认输）"
+            return f"{base}，黑 {scores[0]:.1f} : 白 {scores[1]:.1f}"
 
         side = SIDE_LABELS[state["actor"]]
         if self.mode == "human-bot" and state["actor"] not in self.human_seats:
@@ -260,6 +296,16 @@ class Handler(BaseHTTPRequestHandler):
                     self.send_error_json("session not found", HTTPStatus.NOT_FOUND)
                     return
                 session.apply_human_action(action)
+                self.send_json(session.view(session_id))
+                return
+
+            if self.path == "/api/resign":
+                session_id = str(data.get("session", ""))
+                session = self.server.sessions.get(session_id)
+                if not session:
+                    self.send_error_json("session not found", HTTPStatus.NOT_FOUND)
+                    return
+                session.resign()
                 self.send_json(session.view(session_id))
                 return
 

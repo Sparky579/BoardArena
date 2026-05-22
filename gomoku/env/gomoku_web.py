@@ -21,10 +21,11 @@ from gomoku_env import DEFAULT_MAX_PLIES, GomokuEnv, SystemBot, load_bot
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_BOTS = {
+    "/deepseek_v4/bot_hard": HERE.parent / "baseline" / "deepseek_v4" / "bot_hard.py",
     "/claude_opus4p7/bot_easy": HERE.parent / "baseline" / "claude_opus4p7" / "bot_easy.py",
     "/claude_opus4p7/bot_hard": HERE.parent / "baseline" / "claude_opus4p7" / "bot_hard.py",
 }
-DEFAULT_BOT_ID = "/claude_opus4p7/bot_hard"
+DEFAULT_BOT_ID = "/deepseek_v4/bot_hard"
 STATIC_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",

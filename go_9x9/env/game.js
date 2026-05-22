@@ -15,6 +15,7 @@ const whiteType = document.getElementById("whiteType");
 const blackScore = document.getElementById("blackScore");
 const whiteScore = document.getElementById("whiteScore");
 const passBtn = document.getElementById("passBtn");
+const resignBtn = document.getElementById("resignBtn");
 const boardText = document.getElementById("boardText");
 const moveLog = document.getElementById("moveLog");
 
@@ -118,21 +119,23 @@ async function advanceBot() {
   if (!data || !data.bot_turn || advanceInFlight) return;
   const version = stateVersion;
   const activeSession = sessionId;
+  advanceInFlight = true;
+  let body = null;
   try {
-    advanceInFlight = true;
-    const body = await api("/api/advance", { session: activeSession });
-    if (version !== stateVersion || activeSession !== sessionId) return;
-    data = body;
-    render();
-    queueBotAdvance(220);
+    body = await api("/api/advance", { session: activeSession });
   } catch (error) {
+    advanceInFlight = false;
     if (version !== stateVersion || activeSession !== sessionId) return;
     showRequestError(error, { clear: false });
-  } finally {
-    if (version === stateVersion && activeSession === sessionId) {
-      advanceInFlight = false;
-    }
+    return;
   }
+  // Flip the flag BEFORE render() so the post-bot render correctly sees
+  // that the human is again allowed to act (Pass / 认输).
+  advanceInFlight = false;
+  if (version !== stateVersion || activeSession !== sessionId) return;
+  data = body;
+  render();
+  queueBotAdvance(220);
 }
 
 function canSendAction(action) {
@@ -181,6 +184,9 @@ function render() {
   whiteType.textContent = data.mode === "human-human" || data.human_seats.includes(1) ? "人类" : botName;
   boardText.textContent = data.board.join("\n");
   passBtn.disabled = !canSendAction(PASS_ACTION);
+  // Resign is allowed whenever the human is to move (we don't gate on the
+  // server's `legal_actions` because resign isn't a Go move per se).
+  resignBtn.disabled = !canResign();
   renderModeControls();
   renderBoard();
   renderLog();
@@ -323,5 +329,34 @@ orientationSelect.addEventListener("change", (event) => setOrientation(event.tar
 newGameBtn.addEventListener("click", newGame);
 flipBtn.addEventListener("click", () => setOrientation(orientation === "black" ? "white" : "black"));
 passBtn.addEventListener("click", () => sendAction(PASS_ACTION));
+resignBtn.addEventListener("click", () => {
+  if (!canResign()) return;
+  if (!window.confirm("确认认输？")) return;
+  resign();
+});
+
+function canResign() {
+  return Boolean(
+    data
+    && data.phase !== "game_over"
+    && data.human_turn
+    && !advanceInFlight,
+  );
+}
+
+async function resign() {
+  if (!canResign()) return;
+  const version = stateVersion;
+  try {
+    clearPendingAdvance();
+    const body = await api("/api/resign", { session: sessionId });
+    if (version !== stateVersion) return;
+    data = body;
+    render();
+  } catch (error) {
+    if (version !== stateVersion) return;
+    showRequestError(error, { clear: false });
+  }
+}
 
 loadBotOptions().finally(newGame);
