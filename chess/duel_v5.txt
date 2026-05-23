@@ -1,0 +1,50 @@
+  game  1: B    (0-1, checkmate, 136 plies, A=W)
+  game  2: draw (1/2-1/2, threefold_repetition, 116 plies, A=B)
+  game  3: B    (0-1, checkmate, 106 plies, A=W)
+  game  4: A    (0-1, checkmate, 112 plies, A=B)
+  game  5: draw (1/2-1/2, threefold_repetition, 167 plies, A=W)
+  game  6: B    (1-0, checkmate, 141 plies, A=B)
+  game  7: B    (0-1, checkmate, 164 plies, A=W)
+  game  8: A    (0-1, checkmate, 134 plies, A=B)
+  game  9: draw (1/2-1/2, threefold_repetition, 82 plies, A=W)
+  game 10: A    (0-1, checkmate, 78 plies, A=B)
+  game 11: B    (0-1, checkmate, 136 plies, A=W)
+  game 12: draw (1/2-1/2, threefold_repetition, 75 plies, A=B)
+  game 13: B    (0-1, checkmate, 106 plies, A=W)
+  game 14: draw (*, turn_limit, 240 plies, A=B)
+  game 15: A    (1-0, checkmate, 135 plies, A=W)
+  game 16: draw (1/2-1/2, threefold_repetition, 100 plies, A=B)
+  game 17: A    (1-0, checkmate, 127 plies, A=W)
+  game 18: A    (0-1, checkmate, 78 plies, A=B)
+  game 19: draw (1/2-1/2, threefold_repetition, 121 plies, A=W)
+  game 20: B    (1-0, checkmate, 137 plies, A=B)
+{
+  "bot_a": "baseline/claude_v2/bot_hard.py",
+  "bot_b": "baseline/claude_opus4p7/bot_hard.py",
+  "games": 20,
+  "a_wins": 6,
+  "b_wins": 7,
+  "draws": 7,
+  "a_win_rate": 0.3,
+  "a_score_rate": 0.475,
+  "statuses": {
+    "checkmate": 13,
+    "threefold_repetition": 6,
+    "turn_limit": 1
+  }
+}
+{
+  "bot_a": "baseline/claude_v2/bot_hard.py",
+  "bot_b": "baseline/claude_opus4p7/bot_hard.py",
+  "games": 20,
+  "a_wins": 6,
+  "b_wins": 7,
+  "draws": 7,
+  "a_win_rate": 0.3,
+  "a_score_rate": 0.475,
+  "statuses": {
+    "checkmate": 13,
+    "threefold_repetition": 6,
+    "turn_limit": 1
+  }
+}
