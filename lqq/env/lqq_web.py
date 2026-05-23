@@ -57,119 +57,132 @@ class GameSession:
         self.log: list[dict[str, Any]] = []
         self.forfeit: dict[str, Any] | None = None
         self.bots: dict[int, Any] = {}
+        self.lock = threading.Lock()
 
         if mode == "human-bot":
             bot_seat = 1 - human_seat
             self.bots[bot_seat] = load_bot(bot_path) if bot_path.exists() else SystemBot(self.rng)
 
     def set_bot(self, bot_id: str, bot_path: Path) -> None:
-        if self.mode != "human-bot":
-            raise ValueError("bot can only be changed in human-bot mode")
-        bot_seat = next(seat for seat in (0, 1) if seat not in self.human_seats)
-        self.bot_id = bot_id
-        self.bots[bot_seat] = load_bot(bot_path) if bot_path.exists() else SystemBot(self.rng)
-        self.log.append(
-            {
-                "turn": self.env.game.turn,
-                "seat": bot_seat,
-                "action": "",
-                "text": f"Player {bot_seat + 1} bot changed to {bot_id}",
-            }
-        )
+        with self.lock:
+            if self.mode != "human-bot":
+                raise ValueError("bot can only be changed in human-bot mode")
+            bot_seat = next(seat for seat in (0, 1) if seat not in self.human_seats)
+            self.bot_id = bot_id
+            self.bots[bot_seat] = load_bot(bot_path) if bot_path.exists() else SystemBot(self.rng)
+            self.log.append(
+                {
+                    "turn": self.env.game.turn,
+                    "seat": bot_seat,
+                    "action": "",
+                    "text": f"Player {bot_seat + 1} bot changed to {bot_id}",
+                }
+            )
 
     def apply_human_action(self, action: str) -> None:
-        if self.forfeit is not None:
-            return
-        state = self.env.state()
-        actor = state["actor"]
-        if state["phase"] == "game_over" or actor not in self.human_seats:
-            raise ValueError("not a human turn")
-        if action not in state["legal_actions"]:
-            raise ValueError("illegal action")
-        self._push_action(action, source="human")
+        with self.lock:
+            if self.forfeit is not None:
+                return
+            state = self.env.state()
+            actor = state["actor"]
+            if state["phase"] == "game_over" or actor not in self.human_seats:
+                raise ValueError("not a human turn")
+            if action not in state["legal_actions"]:
+                raise ValueError("illegal action")
+            self._push_action(action, source="human")
 
     def advance_bots(self, decision_timeout: float | None = None) -> None:
-        if decision_timeout is not None:
-            self.decision_timeout = decision_timeout
-        guard = 0
-        while self.forfeit is None:
-            state = self.env.state()
-            if state["phase"] == "game_over" or state["actor"] in self.human_seats:
-                return
-            guard += 1
-            if guard > 64:
-                raise RuntimeError("bot advance exceeded guard limit")
+        with self.lock:
+            if decision_timeout is not None:
+                self.decision_timeout = decision_timeout
+            guard = 0
+            while self.forfeit is None:
+                state = self.env.state(decision_timeout=self.decision_timeout)
+                if state["phase"] == "game_over" or state["actor"] in self.human_seats:
+                    return
+                guard += 1
+                if guard > 64:
+                    raise RuntimeError("bot advance exceeded guard limit")
 
-            actor = state["actor"]
-            bot = self.bots[actor]
-            try:
-                action = choose_action_with_timeout(bot, state, self.decision_timeout)
-            except BotTimeoutError as exc:
-                self.forfeit = {
-                    "winner": 1 - actor,
-                    "status": "timeout",
-                    "error": str(exc),
-                }
-                return
-            except Exception as exc:  # noqa: BLE001 - bot failures are game results.
-                self.forfeit = {
-                    "winner": 1 - actor,
-                    "status": "bot_exception",
-                    "error": f"{type(exc).__name__}: {exc}",
-                }
-                return
-            if action not in state["legal_actions"]:
-                self.forfeit = {
-                    "winner": 1 - actor,
-                    "status": "invalid_action",
-                    "error": f"invalid action from bot seat {actor}: {action!r}",
-                }
-                return
-            self._push_action(action, source="bot")
+                actor = state["actor"]
+                bot = self.bots[actor]
+                try:
+                    action = choose_action_with_timeout(bot, state, self.decision_timeout)
+                except BotTimeoutError as exc:
+                    self.forfeit = {
+                        "winner": 1 - actor,
+                        "status": "timeout",
+                        "error": str(exc),
+                    }
+                    return
+                except Exception as exc:  # noqa: BLE001 - bot failures are game results.
+                    self.forfeit = {
+                        "winner": 1 - actor,
+                        "status": "bot_exception",
+                        "error": f"{type(exc).__name__}: {exc}",
+                    }
+                    return
+                if action not in state["legal_actions"]:
+                    self.forfeit = {
+                        "winner": 1 - actor,
+                        "status": "invalid_action",
+                        "error": f"invalid action from bot seat {actor}: {action!r}",
+                    }
+                    return
+                self._push_action(action, source="bot")
 
     def view(self, session_id: str) -> dict[str, Any]:
-        state = self.env.state()
-        human_turn = (
-            self.forfeit is None
-            and state["phase"] != "game_over"
-            and state["actor"] in self.human_seats
-        )
-        bot_turn = (
-            self.forfeit is None
-            and self.mode == "human-bot"
-            and state["phase"] != "game_over"
-            and state["actor"] not in self.human_seats
-        )
-        if not human_turn:
-            state["legal_actions"] = []
+        with self.lock:
+            state = self.env.state()
+            human_turn = (
+                self.forfeit is None
+                and state["phase"] != "game_over"
+                and state["actor"] in self.human_seats
+            )
+            bot_turn = (
+                self.forfeit is None
+                and self.mode == "human-bot"
+                and state["phase"] != "game_over"
+                and state["actor"] not in self.human_seats
+            )
+            if not human_turn:
+                state["legal_actions"] = []
 
-        if self.forfeit is not None:
-            state["phase"] = "game_over"
-            state["winner"] = self.forfeit["winner"]
-            state["status"] = self.forfeit["status"]
-            state["error"] = self.forfeit["error"]
+            if self.forfeit is not None:
+                state["phase"] = "game_over"
+                state["winner"] = self.forfeit["winner"]
+                state["status"] = self.forfeit["status"]
+                state["error"] = self.forfeit["error"]
 
-        state.update(
-            {
-                "session": session_id,
-                "mode": self.mode,
-                "bot_id": self.bot_id,
-                "decision_timeout": self.decision_timeout,
-                "human_seats": sorted(self.human_seats),
-                "human_turn": human_turn,
-                "bot_turn": bot_turn,
-                "status_text": self.status_text(state, bot_turn),
-                "log": self.log[-100:],
-            }
-        )
-        return state
+            state.update(
+                {
+                    "session": session_id,
+                    "mode": self.mode,
+                    "bot_id": self.bot_id,
+                    "decision_timeout": self.decision_timeout,
+                    "human_seats": sorted(self.human_seats),
+                    "human_turn": human_turn,
+                    "bot_turn": bot_turn,
+                    "status_text": self.status_text(state, bot_turn),
+                    "log": self.log[-100:],
+                }
+            )
+            return state
 
     def status_text(self, state: dict[str, Any], bot_turn: bool) -> str:
         if state["phase"] == "game_over":
             winner = state.get("winner")
+            status = state.get("status")
+            error = state.get("error")
             if winner is None:
                 return "Turn limit reached"
-            return f"Player {winner + 1} wins"
+            res = f"Player {winner + 1} wins"
+            if status in {"timeout", "bot_exception", "invalid_action"}:
+                res += f" ({status}"
+                if error:
+                    res += f": {error}"
+                res += ")"
+            return res
         label = f"Player {state['actor'] + 1}"
         if bot_turn:
             return f"{label} bot is thinking"

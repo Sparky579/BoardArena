@@ -115,8 +115,15 @@ async function submitAction(action) {
 async function advanceIfNeeded() {
   while (state && state.bot_turn) {
     renderBusy("Bot is thinking...");
-    state = await api("/api/advance", { session: state.session, decision_timeout: Number(decisionTimeoutEl.value) });
-    render();
+    try {
+      state = await api("/api/advance", { session: state.session, decision_timeout: Number(decisionTimeoutEl.value) });
+      render();
+    } catch (error) {
+      statusEl.textContent = error.message;
+      if (state) state.bot_turn = false; // Prevent UI freeze
+      renderControls();
+      break;
+    }
   }
 }
 

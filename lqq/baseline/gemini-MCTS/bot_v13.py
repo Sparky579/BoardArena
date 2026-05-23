@@ -30,7 +30,7 @@ def choose_action(state):
 def _time_budget(state, fallback):
     timeout = state.get("decision_timeout") or state.get("time_limit")
     if timeout:
-        return max(0.05, float(timeout) - 0.15)
+        return max(0.05, float(timeout) - 0.25)
     return fallback
 
 PATH_CACHE = {}

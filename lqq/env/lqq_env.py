@@ -321,9 +321,9 @@ class LqqEnv:
     def is_done(self) -> bool:
         return self.game.winner is not None or self._is_truncated()
 
-    def state(self, player_id: int | None = None) -> dict[str, Any]:
+    def state(self, player_id: int | None = None, decision_timeout: float | None = None) -> dict[str, Any]:
         target = self.actor if player_id is None else player_id
-        state = self.game.bot_state(target)
+        state = self.game.bot_state(target, decision_timeout=decision_timeout)
         truncated = self._is_truncated()
         if self.game.winner is not None or truncated:
             state["phase"] = "game_over"
@@ -418,7 +418,11 @@ def choose_action_with_timeout(
     if thread.is_alive():
         raise BotTimeoutError(f"choose_action exceeded {decision_timeout:g} seconds")
 
-    ok, value = result_queue.get_nowait()
+    try:
+        ok, value = result_queue.get(timeout=0.1)
+    except queue.Empty:
+        raise BotTimeoutError(f"choose_action failed to return value within {decision_timeout:g} seconds") from None
+
     if ok:
         return value
     raise value
