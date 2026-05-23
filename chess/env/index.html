@@ -16,6 +16,7 @@
         </div>
         <div class="top-actions">
           <button id="flipBtn" class="icon-button" type="button" aria-label="翻转棋盘" title="翻转棋盘">↕</button>
+          <button id="importBtn" class="text-button" type="button">导入棋谱</button>
           <button id="newGameBtn" class="text-button" type="button">新局</button>
         </div>
       </div>
@@ -106,6 +107,31 @@
       </div>
     </aside>
   </main>
+
+  <div id="importPanel" class="import-panel" hidden>
+    <div class="import-box" role="dialog" aria-label="导入棋谱" aria-modal="true">
+      <div class="import-header">
+        <strong>导入棋谱</strong>
+        <button id="importCloseBtn" class="icon-button" type="button" aria-label="关闭">×</button>
+      </div>
+      <p class="import-hint">
+        支持 PGN 或按行格式（例：<code>白方: e4</code> / <code>黑方 Bot: e5</code>，按倒序排列也可）。
+      </p>
+      <div class="import-actions-top">
+        <label class="text-button" for="importFileInput">选择文件</label>
+        <input id="importFileInput" type="file" accept=".pgn,.txt,text/plain"
+               aria-label="棋谱文件">
+        <span id="importFileName" class="import-filename"></span>
+      </div>
+      <textarea id="importTextarea" class="import-textarea" rows="12"
+                placeholder="粘贴棋谱文本，或从上方选择文件…" spellcheck="false"></textarea>
+      <p id="importError" class="import-error" hidden></p>
+      <div class="import-actions">
+        <button id="importCancelBtn" class="text-button" type="button">取消</button>
+        <button id="importSubmitBtn" class="text-button primary" type="button">导入</button>
+      </div>
+    </div>
+  </div>
 
   <div id="promotionPanel" class="promotion-panel" hidden>
     <div class="promotion-box" role="dialog" aria-label="升变">

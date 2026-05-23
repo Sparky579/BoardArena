@@ -20,6 +20,15 @@ const fenText = document.getElementById("fenText");
 const moveLog = document.getElementById("moveLog");
 const promotionPanel = document.getElementById("promotionPanel");
 const promotionChoices = document.getElementById("promotionChoices");
+const importBtn = document.getElementById("importBtn");
+const importPanel = document.getElementById("importPanel");
+const importCloseBtn = document.getElementById("importCloseBtn");
+const importCancelBtn = document.getElementById("importCancelBtn");
+const importSubmitBtn = document.getElementById("importSubmitBtn");
+const importFileInput = document.getElementById("importFileInput");
+const importFileName = document.getElementById("importFileName");
+const importTextarea = document.getElementById("importTextarea");
+const importError = document.getElementById("importError");
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"];
@@ -87,6 +96,55 @@ async function loadBotOptions() {
   } catch (error) {
     console.error(error);
   }
+}
+
+async function importGame(text) {
+  const version = stateVersion + 1;
+  stateVersion = version;
+  importSubmitBtn.disabled = true;
+  try {
+    clearPendingAdvance();
+    clearMoveAnimations();
+    advanceInFlight = false;
+    selectedSquare = null;
+    promotionPanel.hidden = true;
+    const body = await api("/api/import", {
+      text,
+      mode,
+      human_seat: humanSeat,
+      bot: botId,
+    });
+    if (version !== stateVersion) return;
+    const previous = data;
+    sessionId = body.session;
+    data = body;
+    if (mode === "human-bot") orientation = humanSeat === 0 ? "white" : "black";
+    orientationSelect.value = orientation;
+    render(previous);
+    closeImportPanel();
+    queueBotAdvance(0);
+  } catch (error) {
+    if (version === stateVersion) {
+      importError.hidden = false;
+      importError.textContent = `导入失败：${error.message}`;
+    }
+  } finally {
+    importSubmitBtn.disabled = false;
+  }
+}
+
+function openImportPanel() {
+  importError.hidden = true;
+  importError.textContent = "";
+  importPanel.hidden = false;
+  // defer focus to allow the panel to lay out
+  window.setTimeout(() => importTextarea.focus(), 0);
+}
+
+function closeImportPanel() {
+  importPanel.hidden = true;
+  importError.hidden = true;
+  importError.textContent = "";
 }
 
 async function newGame() {
@@ -629,6 +687,40 @@ flipBtn.addEventListener("click", () => {
 });
 promotionPanel.addEventListener("click", (event) => {
   if (event.target === promotionPanel) promotionPanel.hidden = true;
+});
+
+importBtn.addEventListener("click", openImportPanel);
+importCloseBtn.addEventListener("click", closeImportPanel);
+importCancelBtn.addEventListener("click", closeImportPanel);
+importPanel.addEventListener("click", (event) => {
+  if (event.target === importPanel) closeImportPanel();
+});
+importFileInput.addEventListener("change", async () => {
+  const file = importFileInput.files && importFileInput.files[0];
+  if (!file) return;
+  importFileName.textContent = file.name;
+  try {
+    importTextarea.value = await file.text();
+    importError.hidden = true;
+    importError.textContent = "";
+  } catch (error) {
+    importError.hidden = false;
+    importError.textContent = `读取文件失败：${error.message}`;
+  } finally {
+    importFileInput.value = "";
+  }
+});
+importSubmitBtn.addEventListener("click", () => {
+  const text = importTextarea.value.trim();
+  if (!text) {
+    importError.hidden = false;
+    importError.textContent = "请粘贴棋谱或选择文件";
+    return;
+  }
+  importGame(text);
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !importPanel.hidden) closeImportPanel();
 });
 
 const initialPieceLoad = preloadPieceSet(pieceSet);

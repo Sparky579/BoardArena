@@ -7,6 +7,7 @@ import argparse
 import errno
 import json
 import random
+import sys
 import threading
 import uuid
 import webbrowser
@@ -22,6 +23,8 @@ from chess_env import DEFAULT_MAX_PLIES, ChessEnv, SystemBot, load_bot
 
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent / "utils"))
+from import_game import parse_game  # noqa: E402
 DEFAULT_BOTS = {
     "/gpt5p5/bot_easy": HERE.parent / "baseline" / "gpt5p5" / "bot_easy.py",
     "/gpt5p5/bot_medium": HERE.parent / "baseline" / "gpt5p5" / "bot_medium.py",
@@ -182,7 +185,7 @@ class GameSession:
         san = self.env.board.san(move)
         _, _, terminated, truncated, info = self.env.step(action)
         side = "白方" if actor == 0 else "黑方"
-        who = side if source == "human" else f"{side} Bot"
+        who = f"{side} Bot" if source == "bot" else side
         self.log.append({"ply": self.env.plies, "seat": actor, "action": action, "san": san, "text": f"{who}: {san}"})
         if terminated or truncated:
             status = info.get("status", "turn_limit" if truncated else "ok")
@@ -274,6 +277,39 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 session.apply_human_action(action)
                 self.send_json(session.view(session_id))
+                return
+
+            if self.path == "/api/import":
+                text = str(data.get("text", ""))
+                if not text.strip():
+                    raise ValueError("请提供棋谱文本")
+                mode = str(data.get("mode", "human-human"))
+                human_seat = int(data.get("human_seat", 0))
+                bot_id = str(data.get("bot", self.server.default_bot_id))
+                if bot_id not in self.server.bot_paths:
+                    raise ValueError(f"unknown bot: {bot_id}")
+                try:
+                    _, moves, fmt = parse_game(text)
+                except ImportError as exc:
+                    raise ValueError(str(exc)) from None
+                session_id = uuid.uuid4().hex
+                seed = None if self.server.seed is None else self.server.seed + len(self.server.sessions)
+                session = GameSession(
+                    mode=mode,
+                    human_seat=human_seat,
+                    bot_id=bot_id,
+                    bot_path=self.server.bot_paths[bot_id],
+                    seed=seed,
+                    max_plies=self.server.max_plies,
+                )
+                for move in moves:
+                    session._push_action(move, source="import")
+                with self.server.lock:
+                    self.server.sessions[session_id] = session
+                view = session.view(session_id)
+                view["imported_format"] = fmt
+                view["imported_moves"] = len(moves)
+                self.send_json(view)
                 return
 
             if self.path == "/api/advance":

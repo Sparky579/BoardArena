@@ -350,16 +350,128 @@ button,
   line-height: 1.45;
 }
 
-.promotion-panel {
+.promotion-panel,
+.import-panel {
   position: fixed;
   inset: 0;
   display: grid;
   place-items: center;
   background: rgba(16, 24, 22, 0.32);
+  z-index: 10;
 }
 
-.promotion-panel[hidden] {
+.promotion-panel[hidden],
+.import-panel[hidden] {
   display: none;
+}
+
+.import-box {
+  display: grid;
+  gap: 12px;
+  width: min(540px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 18px 20px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 20px 60px rgba(16, 24, 22, 0.28);
+}
+
+.import-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.import-header strong {
+  font-size: 16px;
+}
+
+.import-header .icon-button {
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+}
+
+.import-hint {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.import-hint code {
+  background: var(--bg);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.import-actions-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.import-actions-top label.text-button {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+#importFileInput {
+  display: none;
+}
+
+.import-filename {
+  color: var(--muted);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.import-textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.import-textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.import-error {
+  color: var(--accent-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.import-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.text-button.primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.text-button.primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .promotion-box {
