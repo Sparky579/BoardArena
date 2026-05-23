@@ -1,23 +1,29 @@
 """Stronger chess bot (v2). Built on the v1 α-β engine with additions
 targeting the 2-second ladder:
 
-  1. Adaptive time budget. v1's hardcoded 1.55s + 0.85 hard ratio leaves
+  1. Adaptive time budget. v1 hardcodes 1.55s + 0.85 hard ratio, leaving
      compute on the table at 2s timeouts. v2 probes with 1.85s and a 0.90
      hard ratio (~1.67s effective cap), falling back to a 0.78s safe
      budget on the first kill so it also survives 1s evaluations.
   2. Opening book. The first ~5-9 plies of mainline chess are
-     deterministic enough that running α-β for them just spends compute.
-     v2 plays book moves instantly when the position matches a Sicilian /
-     Italian / Caro-Kann / French main line, or any standard 1.d4/1.c4/
-     1.Nf3 response.
-  3. Aspiration windows from depth 4 onward. Narrower (α, β) bounds give
-     faster re-search on stable iterations, typically buying ~0.5 ply.
-  4. Passed-pawn evaluation. v1's eval has no passed-pawn term, which is
-     the single biggest missing endgame heuristic.
+     deterministic enough that running α-β for them is pure waste. v2
+     plays book replies instantly when the position matches a Sicilian /
+     Italian / Caro-Kann / French main line, or any standard 1.d4 / 1.c4
+     / 1.Nf3 response.
+  3. Passed-pawn evaluation. v1's eval has no passed-pawn term, the
+     single biggest missing endgame heuristic.
+  4. Cheap pawn-shield king safety, gated on queens-on-board so it stays
+     out of endgame computation. (An attacker-count via
+     ``board.attackers_mask`` was tried and was too slow.)
+  5. 1M-entry transposition table (was 400k), large enough that single
+     midgame moves don't blow it out and clear.
 
-Tried king-safety (attacker-count and pawn-shield variants); both either
-slowed search materially or were no clear win across seeds, so they
-aren't in the shipped build.
+  6. Aspiration windows from depth 4 onward. ±30 cp around the previous
+     iteration's score, widen 3× on fail-low/high, fall back to full
+     window once it exceeds 800 cp.
+  7. Late Move Pruning (LMP) at depth ≤ 3 for quiet non-checking moves
+     once we've already tried 3 + 2·depth² siblings. Cheap way to skip
+     obvious-loser late quiet moves at low depth.
 """
 
 from __future__ import annotations
@@ -428,10 +434,49 @@ class Engine:
                 mg -= _PASSED_BONUS_MG[rank]
                 eg -= _PASSED_BONUS_EG[rank]
 
-        # (Tried two king-safety terms: an attacker-count via
-        # board.attackers_mask was too slow; a pawn-shield variant gave
-        # ~62-75% across seeds — high variance, not clearly Pareto
-        # over v1's PST-only king eval. Dropped both.)
+        # ---- v2: cheap pawn-shield king safety ----
+        # Only gated on queens-on-board (middlegame matters). Counts
+        # friendly pawns on the 3 files closest to the king on the rank
+        # just in front of it. -12 cp per missing shield pawn, -30 cp for
+        # a king that hasn't moved toward a corner. (Earlier attacker-
+        # count via board.attackers_mask ate too much budget.)
+        wq = board.queens & white_occ
+        bq = board.queens & black_occ
+        if wq and bq:
+            wk = board.kings & white_occ
+            if wk:
+                wk_sq = wk.bit_length() - 1
+                kf = wk_sq & 7
+                kr = wk_sq >> 3
+                if kr <= 1 and (kf <= 2 or kf >= 5):
+                    shield_files = (
+                        chess.BB_FILES[max(kf - 1, 0)]
+                        | chess.BB_FILES[kf]
+                        | chess.BB_FILES[min(kf + 1, 7)]
+                    )
+                    shield_rank = chess.BB_RANKS[kr + 1] if kr + 1 < 8 else 0
+                    shield = white_pawns & shield_files & shield_rank
+                    missing = 3 - _popcount(shield)
+                    mg -= missing * 12
+                else:
+                    mg -= 30
+            bk = board.kings & black_occ
+            if bk:
+                bk_sq = bk.bit_length() - 1
+                kf = bk_sq & 7
+                kr = bk_sq >> 3
+                if kr >= 6 and (kf <= 2 or kf >= 5):
+                    shield_files = (
+                        chess.BB_FILES[max(kf - 1, 0)]
+                        | chess.BB_FILES[kf]
+                        | chess.BB_FILES[min(kf + 1, 7)]
+                    )
+                    shield_rank = chess.BB_RANKS[kr - 1] if kr - 1 >= 0 else 0
+                    shield = black_pawns & shield_files & shield_rank
+                    missing = 3 - _popcount(shield)
+                    mg += missing * 12
+                else:
+                    mg += 30
 
         if phase > MAX_PHASE:
             phase = MAX_PHASE
@@ -615,10 +660,26 @@ class Engine:
         best_move = None
         moves_searched = 0
 
+        # Pre-compute pruning threshold for Late Move Pruning (LMP):
+        # at low depth with no check, prune obvious-loser late quiet
+        # moves entirely instead of paying for a null-window probe.
+        # Standard formula: 3 + 2*depth*depth quiet moves at depth<=3.
+        lmp_threshold = (
+            3 + 2 * depth * depth if depth <= 3 and not in_check else 10**9
+        )
+
         for _, _, move in scored:
             is_capture = board.is_capture(move)
             is_promo = move.promotion is not None
             is_tactical = is_capture or is_promo or in_check
+
+            # ---- LMP ----
+            if (
+                moves_searched >= lmp_threshold
+                and not is_tactical
+                and best_value > -MATE_THRESHOLD
+            ):
+                continue
 
             board.push(move)
 
@@ -694,9 +755,10 @@ class Engine:
     def _search_root(self, board, depth, prev_best, alpha=-INF, beta=INF):
         """Search the root, returning (best_value, best_move).
 
-        Re-raises TimeUp without modifying any partial state so the caller can
-        fall back to the previous iteration's best move. Accepts optional
-        (alpha, beta) bounds so the caller can drive aspiration windows.
+        Re-raises TimeUp without modifying any partial state so the caller
+        can fall back to the previous iteration's best move. Accepts
+        optional (alpha, beta) bounds for aspiration-window search by the
+        caller.
         """
         legal = list(board.generate_legal_moves())
         if not legal:
@@ -749,7 +811,7 @@ class Engine:
         self.killers = [[None, None] for _ in range(MAX_PLY)]
         if self.history:
             self.history = {k: v // 2 for k, v in self.history.items() if v >= 2}
-        if len(self.tt) > 400_000:
+        if len(self.tt) > 1_000_000:
             self.tt.clear()
 
         legal = list(board.legal_moves)
@@ -766,8 +828,9 @@ class Engine:
                 break
             try:
                 if depth >= 4:
-                    # Aspiration windows around the previous iteration's
-                    # score. Widen on fail-high/low.
+                    # Aspiration around prev iteration's score, widen 3×
+                    # on fail. Commits the search result even on a bounded
+                    # fail — empirically this gave the best win-rate.
                     window = 30
                     while True:
                         alpha = prev_score - window

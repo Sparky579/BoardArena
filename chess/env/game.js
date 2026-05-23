@@ -350,11 +350,12 @@ function renderBoard() {
 
 function renderLog() {
   moveLog.innerHTML = "";
-  [...data.log].reverse().forEach((item) => {
+  data.log.forEach((item) => {
     const li = document.createElement("li");
     li.textContent = item.text;
     moveLog.appendChild(li);
   });
+  moveLog.scrollTop = moveLog.scrollHeight;
 }
 
 function onSquareClick(square) {
