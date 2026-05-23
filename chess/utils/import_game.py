@@ -130,19 +130,26 @@ def _parse_replay_lines(text: str) -> list[tuple[str | None, str]]:
 
 
 def parse_replay_log(text: str) -> tuple[chess.Board, list[str]]:
-    """Parse the reverse-chronological per-line replay format.
+    """Parse the per-line replay format. Auto-detects ordering:
 
-    The input has the latest half-move on the first line and the
-    opening move on the last line. We reverse and then push moves onto
-    a fresh board, checking that any side prefixes match the side to
-    move at that point.
+      - If the first prefixed line is 白方 (white), the input is
+        chronological (top = ply 1, bottom = last move). This matches
+        the on-screen move-log UI, so copy-paste from the running
+        session "just works".
+      - If the first prefixed line is 黑方 (black), the input is
+        reverse-chronological (top = last move, bottom = opening).
+        This matches the older sample shape we shipped with.
+      - If no prefix is present at all, treat as chronological.
     """
     lines = _parse_replay_lines(text)
     if not lines:
         raise ImportError("复盘文本解析失败：未找到任何走子")
 
-    # File order is reverse chrono → reverse for play order.
-    plays = list(reversed(lines))
+    first_side = next((side for side, _ in lines if side is not None), None)
+    if first_side == "black":
+        plays = list(reversed(lines))
+    else:
+        plays = list(lines)
 
     board = chess.Board()
     moves: list[str] = []

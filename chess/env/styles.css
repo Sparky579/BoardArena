@@ -343,7 +343,9 @@ button,
 .move-log {
   max-height: 260px;
   margin: 10px 0 0;
-  padding-left: 22px;
+  /* Wide enough for 3-digit ply numbers ("100." etc.) — at 22px the
+     leftmost digit of 100+ got clipped by the panel edge. */
+  padding-left: 40px;
   overflow: auto;
   color: var(--muted);
   font-size: 14px;
