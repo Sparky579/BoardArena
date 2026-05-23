@@ -49,6 +49,7 @@ class Bot(_BASE.Bot):
         self._pressure_cache.clear()
         self._escape_cache.clear()
         self._root_turn = int(state.get("turn", 0))
+        self._referee_timeout = state.get("decision_timeout", 1.0)
         self._security_eval = False
         action = super().choose_action(state)
         if self._root_turn < 28:
@@ -95,7 +96,11 @@ class Bot(_BASE.Bot):
         return super()._book_action(node, legal)
 
     def _safer_root_action(self, node, legal, base_action):
-        stop = time.perf_counter() + 0.28
+        # Dynamically adjust stop time based on referee timeout
+        # This bot uses a small fraction (about 1/2 of gpt-hard budget) for its own safety check
+        referee_timeout = getattr(self, "_referee_timeout", 1.0)
+        stop = time.perf_counter() + max(0.05, float(referee_timeout) - 0.15)
+        
         legal_set = set(legal)
         candidates = [base_action]
         candidates.extend(action for action in legal if action in MOVE_DELTAS)

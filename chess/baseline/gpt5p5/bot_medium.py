@@ -18,6 +18,7 @@ except ImportError:  # pragma: no cover - lets the judge surface a clear result.
 name = "gpt5p5_medium"
 
 MAX_TIME_SECONDS = 1.2
+SAFETY_MARGIN_SECONDS = 0.15
 MAX_DEPTH = 4
 QUIESCENCE_DEPTH = 4
 INF = 10_000_000
@@ -131,7 +132,7 @@ def choose_action(state):
 
     board = chess.Board(state["fen"])
     perspective = board.turn
-    deadline = time.monotonic() + MAX_TIME_SECONDS
+    deadline = time.monotonic() + _time_budget(state, MAX_TIME_SECONDS)
     transposition = {}
 
     best_move = _fallback_move(board, legal)
@@ -393,3 +394,10 @@ def _fallback_move(board, legal):
 def _check_time(deadline):
     if time.monotonic() >= deadline:
         raise SearchTimeout
+
+
+def _time_budget(state, fallback):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return fallback

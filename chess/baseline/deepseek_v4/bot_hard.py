@@ -22,6 +22,8 @@ import time
 import chess
 import chess.polyglot
 
+SAFETY_MARGIN_SECONDS = 0.15
+
 # Python default recursion limit may be too low for deep searches.
 sys.setrecursionlimit(10_000)
 
@@ -502,6 +504,9 @@ class Bot:
             raise ValueError("no legal actions available")
         if len(legal) == 1:
             return legal[0]
+        timeout = state.get("decision_timeout") or state.get("time_limit")
+        if timeout:
+            self._time_limit = max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
 
         board = chess.Board(state["fen"])
         self._start_time = time.time()

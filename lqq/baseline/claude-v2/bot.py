@@ -43,6 +43,13 @@ def choose_action(state):
     return Bot().choose_action(state)
 
 
+def _time_budget(state, fallback):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - 0.15)
+    return fallback
+
+
 def bfs_path(pos, target_row, h_mask, v_mask):
     key = (pos, target_row, h_mask, v_mask)
     if key in PATH_CACHE:
@@ -679,8 +686,9 @@ class Bot:
         state.h_walls = h_walls
         state.v_walls = v_walls
 
-        searcher = Searcher(0.7, start_time=start_time)
-        soft_deadline = start_time + 0.55
+        budget = _time_budget(state_dict, 0.7)
+        searcher = Searcher(budget, start_time=start_time)
+        soft_deadline = start_time + max(0.05, budget - 0.15)
 
         legal_set = set(legal_actions)
         root_actions = [a for a in get_legal_actions(state) if a in legal_set]

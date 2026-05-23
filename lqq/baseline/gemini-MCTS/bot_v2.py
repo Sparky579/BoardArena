@@ -415,7 +415,7 @@ class MCTS:
             
         while True:
             nodes_searched += 1
-            if nodes_searched % 128 == 0:
+            if nodes_searched % 16 == 0:
                 if time.perf_counter() - start_time > self.time_limit:
                     break
                     
@@ -467,6 +467,14 @@ class Bot:
             return ""
         if len(legal_actions) == 1:
             return legal_actions[0]
+            
+        # Dynamically adjust time limit based on provided decision_timeout
+        # Default to 0.85 if not provided. Leave 0.15s for referee/thread overhead.
+        referee_timeout = state_dict.get("decision_timeout")
+        if referee_timeout:
+            self.mcts.time_limit = max(0.05, float(referee_timeout) - 0.15)
+        else:
+            self.mcts.time_limit = 0.85
             
         me = int(state_dict.get("player_id", state_dict.get("actor", 0)))
         

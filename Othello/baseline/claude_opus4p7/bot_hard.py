@@ -70,7 +70,7 @@ TT_LOWER = 1
 TT_UPPER = 2
 
 TIME_BUDGET = 1.7
-TIME_HARD_RATIO = 0.92
+SAFETY_MARGIN_SECONDS = 0.15
 TIME_SOFT_RATIO = 0.55
 
 
@@ -378,8 +378,9 @@ class Engine:
         if len(legal) == 1:
             return legal[0]
 
+        budget = _time_budget(state, budget)
         self.start = time.perf_counter()
-        self.deadline = self.start + budget * TIME_HARD_RATIO
+        self.deadline = self.start + budget
         self.deadline_soft = self.start + budget * TIME_SOFT_RATIO
         self.nodes = 0
         if len(self.tt) > 400_000:
@@ -445,3 +446,10 @@ _MODULE_ENGINE = Engine()
 
 def choose_action(state):
     return _MODULE_ENGINE.choose(state)
+
+
+def _time_budget(state, fallback):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return fallback

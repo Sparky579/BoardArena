@@ -25,16 +25,11 @@ MOVE_DELTAS = {
 
 def choose_action(state):
     PATH_CACHE.clear()
+    VULN_CACHE.clear()
     return Bot().choose_action(state)
 
-
-def _time_budget(state, fallback):
-    timeout = state.get("decision_timeout") or state.get("time_limit")
-    if timeout:
-        return max(0.05, float(timeout) - 0.15)
-    return fallback
-
 PATH_CACHE = {}
+VULN_CACHE = {}
 
 def bfs_path(pos, target_row, h_mask, v_mask):
     key = (pos, target_row, h_mask, v_mask)
@@ -99,6 +94,48 @@ def bfs_path(pos, target_row, h_mask, v_mask):
         
     PATH_CACHE[key] = (1000, [])
     return 1000, []
+
+def get_intersecting_walls_list(path):
+    walls = []
+    for i in range(len(path) - 1):
+        u, v = path[i], path[i+1]
+        if abs(u - v) == 9:
+            top = min(u, v)
+            r, c = top // 9, top % 9
+            if c < 8: walls.append(('H', r, c))
+            if c > 0: walls.append(('H', r, c - 1))
+        elif abs(u - v) == 1:
+            left = min(u, v)
+            r, c = left // 9, left % 9
+            if r < 8: walls.append(('V', r, c))
+            if r > 0: walls.append(('V', r - 1, c))
+    return walls
+
+def calc_vulnerability(pos, target_row, path, h_mask, v_mask, h_walls, v_walls):
+    key = (pos, target_row, h_mask, v_mask, h_walls, v_walls)
+    if key in VULN_CACHE:
+        return VULN_CACHE[key]
+        
+    walls = get_intersecting_walls_list(path)
+    base_dist = len(path) - 1
+    if base_dist < 0: base_dist = 0
+    max_dist = base_dist
+    
+    for w in walls:
+        d, r, c = w
+        if is_valid_wall(d, r, c, h_walls, v_walls):
+            if d == 'H':
+                new_h = h_mask | (1 << (r * 9 + c)) | (1 << (r * 9 + c + 1))
+                dist, _ = bfs_path(pos, target_row, new_h, v_mask)
+            else:
+                new_v = v_mask | (1 << (r * 9 + c)) | (1 << ((r + 1) * 9 + c))
+                dist, _ = bfs_path(pos, target_row, h_mask, new_v)
+                
+            if dist < 1000 and dist > max_dist: 
+                max_dist = dist
+                
+    VULN_CACHE[key] = max_dist
+    return max_dist
 
 def get_intersecting_walls_set(path):
     walls = set()
@@ -270,7 +307,9 @@ def get_legal_actions_with_priors(state, my_dist, my_path, opp_dist, opp_path):
                 if od >= 1000: continue
                 
                 if w in opp_path_walls:
-                    if od > opp_dist:
+                    if od > opp_dist + 2:
+                        actions.append((f"WALL_{d}_{wr}_{wc}", 50.0))
+                    elif od > opp_dist:
                         actions.append((f"WALL_{d}_{wr}_{wc}", 8.0))
                     else:
                         actions.append((f"WALL_{d}_{wr}_{wc}", 1.5))
@@ -280,7 +319,7 @@ def get_legal_actions_with_priors(state, my_dist, my_path, opp_dist, opp_path):
     return actions
 
 class Node:
-    __slots__ = ['state', 'parent', 'action_taken', 'children', 'N', 'W', 'P', 'is_expanded']
+    __slots__ = ['state', 'parent', 'action_taken', 'children', 'N', 'W', 'P', 'is_expanded', 'status']
     def __init__(self, state, parent, action_taken, P):
         self.state = state
         self.parent = parent
@@ -290,6 +329,7 @@ class Node:
         self.W = 0.0
         self.P = P
         self.is_expanded = False
+        self.status = 0 # 0=unknown, 1=win, -1=loss
 
 class MCTS:
     def __init__(self, time_limit):
@@ -302,18 +342,37 @@ class MCTS:
         me = state.actor
         opp = 1 - me
         
-        if state.pos[me] // 9 == state.goals[me]: return 1.0
-        if state.pos[opp] // 9 == state.goals[opp]: return -1.0
+        if state.pos[me] // 9 == state.goals[me]: 
+            node.status = 1
+            return 1.0
+        if state.pos[opp] // 9 == state.goals[opp]: 
+            node.status = -1
+            return -1.0
             
         my_dist, my_path = bfs_path(state.pos[me], state.goals[me], state.h_mask, state.v_mask)
         opp_dist, opp_path = bfs_path(state.pos[opp], state.goals[opp], state.h_mask, state.v_mask)
         
-        if my_dist >= 1000: return -1.0
-        if opp_dist >= 1000: return 1.0
+        if my_dist >= 1000: 
+            node.status = -1
+            return -1.0
+        if opp_dist >= 1000: 
+            node.status = 1
+            return 1.0
             
         my_turns = my_dist * 2
         opp_turns = opp_dist * 2 - 1 
+        
+        my_vuln = my_dist
+        if state.walls_rem[opp] > 0:
+            my_vuln = calc_vulnerability(state.pos[me], state.goals[me], my_path, state.h_mask, state.v_mask, state.h_walls, state.v_walls)
+            
+        opp_vuln = opp_dist
+        if state.walls_rem[me] > 0:
+            opp_vuln = calc_vulnerability(state.pos[opp], state.goals[opp], opp_path, state.h_mask, state.v_mask, state.h_walls, state.v_walls)
+            
         race_diff = opp_turns - my_turns 
+        race_diff -= (my_vuln - my_dist) * 1.5
+        race_diff += (opp_vuln - opp_dist) * 1.5
         
         value = math.tanh(race_diff * 0.25)
         
@@ -329,7 +388,9 @@ class MCTS:
         node.is_expanded = True
         
         actions = get_legal_actions_with_priors(state, my_dist, my_path, opp_dist, opp_path)
-        if not actions: return -1.0
+        if not actions: 
+            node.status = -1
+            return -1.0
             
         total_p = sum(p for a, p in actions)
         for a, p in actions:
@@ -360,24 +421,30 @@ class MCTS:
         start_time = time.perf_counter()
         nodes_searched = 0
         
-        if not self.root.is_expanded:
+        if not self.root.is_expanded and self.root.status == 0:
             self.expand_and_evaluate(self.root)
             
         while True:
             nodes_searched += 1
-            if nodes_searched % 128 == 0:
+            if nodes_searched % 16 == 0:
                 if time.perf_counter() - start_time > self.time_limit:
                     break
                     
             node = self.root
             path = [node]
-            while node.is_expanded and node.children:
+            while node.is_expanded and node.children and node.status == 0:
                 best_child = None
                 best_uct = -math.inf
                 sqrt_N = math.sqrt(node.N)
                 parent_q = (node.W / node.N) if node.N > 0 else 0.0
                 
                 for child in node.children:
+                    if child.status == -1:
+                        node.status = 1
+                        break
+                    if child.status == 1:
+                        continue
+                        
                     if child.N == 0:
                         q_node = parent_q
                     else:
@@ -387,22 +454,41 @@ class MCTS:
                     if uct > best_uct:
                         best_uct = uct
                         best_child = child
+                        
+                if node.status == 1:
+                    break
+                if best_child is None:
+                    node.status = -1
+                    break
+                    
                 node = best_child
                 path.append(node)
                 
-            if not node.is_expanded:
+            if node.status != 0:
+                value = node.status
+            elif not node.is_expanded:
                 value = self.expand_and_evaluate(node)
+                if node.status != 0: value = node.status
             else:
-                me = node.state.actor
-                if node.state.pos[me] // 9 == node.state.goals[me]:
-                    value = 1.0
-                else:
-                    value = -1.0
+                value = 0
                     
             current_val = value
             for n in reversed(path):
                 n.N += 1
                 n.W += current_val
+                
+                if n.status == 0 and n.is_expanded and n.children:
+                    has_win = False
+                    all_loss = True
+                    for c in n.children:
+                        if c.status == -1:
+                            has_win = True
+                            break
+                        if c.status != 1:
+                            all_loss = False
+                    if has_win: n.status = 1
+                    elif all_loss: n.status = -1
+                        
                 current_val = -current_val
 
 class Bot:
@@ -417,7 +503,14 @@ class Bot:
             return ""
         if len(legal_actions) == 1:
             return legal_actions[0]
-        self.mcts.time_limit = _time_budget(state_dict, 0.85)
+            
+        # Dynamically adjust time limit based on provided decision_timeout
+        # Default to 0.85 if not provided. Leave 0.15s for referee/thread overhead.
+        referee_timeout = state_dict.get("decision_timeout")
+        if referee_timeout:
+            self.mcts.time_limit = max(0.05, float(referee_timeout) - 0.15)
+        else:
+            self.mcts.time_limit = 0.85
             
         me = int(state_dict.get("player_id", state_dict.get("actor", 0)))
         

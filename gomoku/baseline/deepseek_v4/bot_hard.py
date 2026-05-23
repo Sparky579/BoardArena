@@ -31,6 +31,8 @@ from env.gomoku_env import (
     classify_move, on_board, opponent, count_fours_and_open_threes,
 )
 
+SAFETY_MARGIN_SECONDS = 0.15
+
 # ═══════════════════════════════════════════════════════════════════════════
 #  Eval tables
 # ═══════════════════════════════════════════════════════════════════════════
@@ -483,8 +485,9 @@ class Bot:
             return best
 
         fb = _fallback(board, me, legal)
+        budget = _time_budget(state, 1.80)
         self._t0 = time.time()
-        DEADLINE = self._t0 + 1.80
+        DEADLINE = self._t0 + budget
         self._tt.clear()
         self._killer.clear()
 
@@ -498,7 +501,7 @@ class Bot:
         else:             md = 2
 
         for d in range(2, md + 1, 2):
-            if time.time() - self._t0 > 1.80 * 0.2:
+            if time.time() - self._t0 > budget * 0.2:
                 break
             try:
                 a = self._sroot(board, me, d, root, DEADLINE)
@@ -544,3 +547,10 @@ def choose_action(state):
     if _DEFAULT is None:
         _DEFAULT = Bot()
     return _DEFAULT.choose_action(state)
+
+
+def _time_budget(state, fallback):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return fallback

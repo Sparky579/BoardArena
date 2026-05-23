@@ -21,6 +21,7 @@ DRAW_ACTION = "draw"
 PASS_ACTION = "pass"
 
 TIME_BUDGET = 0.28
+SAFETY_MARGIN_SECONDS = 0.15
 MAX_ITERATIONS = 420
 ROLLOUT_DEPTH = 82
 EXPLORATION = 0.72
@@ -52,7 +53,7 @@ def choose_action(state):
     visits = {action: 0 for action in legal}
     values = {action: 0.0 for action in legal}
     total_visits = 0
-    deadline = time.perf_counter() + TIME_BUDGET
+    deadline = time.perf_counter() + _time_budget(state)
     max_iterations = _iteration_budget(state, legal)
 
     for _ in range(max_iterations):
@@ -551,6 +552,13 @@ def _copy_card(card):
 
 def _clamp(value, low, high):
     return max(low, min(high, value))
+
+
+def _time_budget(state):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return TIME_BUDGET
 
 
 def _build_deck():

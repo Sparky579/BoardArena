@@ -19,6 +19,7 @@ BOARD_SIZE = 9
 INF = 10_000
 WIN_SCORE = 1_000_000
 TIME_BUDGET = 0.82
+SAFETY_MARGIN_SECONDS = 0.15
 
 MOVE_DELTAS = {
     "MOVE_UP": (-1, 0),
@@ -30,6 +31,13 @@ MOVE_DELTAS = {
     "MOVE_DOWN_LEFT": (1, -1),
     "MOVE_DOWN_RIGHT": (1, 1),
 }
+
+
+def _time_budget(state, fallback):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return fallback
 
 CARDINALS = ((-1, 0), (1, 0), (0, -1), (0, 1))
 MOVE_NAMES = tuple(MOVE_DELTAS)
@@ -72,7 +80,7 @@ class Bot:
         if len(legal) == 1:
             return legal[0]
 
-        self.deadline = time.perf_counter() + TIME_BUDGET
+        self.deadline = time.perf_counter() + _time_budget(state, TIME_BUDGET)
         self.me = int(state.get("actor", state.get("player_id", 0)))
         self._pressure_cache.clear()
         node = self._from_state(state)

@@ -4,6 +4,8 @@
 import time
 import collections
 
+SAFETY_MARGIN_SECONDS = 0.15
+
 BOARD_SIZE = 9
 INF = 1000
 WIN_SCORE = 1000000
@@ -22,6 +24,9 @@ class Bot:
 
     def choose_action(self, state):
         self.start_time = time.perf_counter()
+        timeout = state.get("decision_timeout") or state.get("time_limit")
+        if timeout:
+            self.time_limit = max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
         self.transposition_table = {}
         self.killer_moves = {}
         self.nodes_searched = 0

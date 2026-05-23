@@ -28,7 +28,7 @@ from collections import deque
 
 BOARD = 9
 TIME_BUDGET = 0.85
-TIME_HARD_RATIO = 0.95
+SAFETY_MARGIN_SECONDS = 0.15
 TIME_SOFT_RATIO = 0.55
 
 INF = 10**8
@@ -679,8 +679,13 @@ class Engine:
         return best_value, best_move
 
     def choose(self, state, budget=TIME_BUDGET):
+        # Dynamically adjust budget based on referee timeout
+        referee_timeout = state.get("decision_timeout")
+        if referee_timeout:
+            budget = max(0.05, float(referee_timeout) - SAFETY_MARGIN_SECONDS)
+            
         start = time.perf_counter()
-        self.deadline = start + budget * TIME_HARD_RATIO
+        self.deadline = start + budget
         self.deadline_soft = start + budget * TIME_SOFT_RATIO
         self.nodes = 0
         self.killers = [[None, None] for _ in range(MAX_PLY)]

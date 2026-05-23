@@ -448,7 +448,14 @@ class Bot:
                     if act in legal:
                         return act
                     
-        self.deadline = time.perf_counter() + SAFETY_SECONDS
+        # Dynamically adjust deadline based on referee decision_timeout
+        referee_timeout = state.get("decision_timeout")
+        if referee_timeout:
+            budget = max(0.05, float(referee_timeout) - 0.15)
+        else:
+            budget = SAFETY_SECONDS
+            
+        self.deadline = time.perf_counter() + budget
         self.nodes = 0
         best_action_overall = None
         

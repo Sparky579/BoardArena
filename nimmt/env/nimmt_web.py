@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-from nimmt_env import MAX_PLAYERS, MIN_PLAYERS, NimmtEnv, SystemBot, load_bot
+from nimmt_env import MAX_PLAYERS, MIN_PLAYERS, BotTimeoutError, NimmtEnv, SystemBot, choose_action_with_timeout, load_bot
 
 
 HERE = Path(__file__).resolve().parent
@@ -25,6 +25,8 @@ DEFAULT_BOTS = {
     "/baseline/bot_greedy": HERE.parent / "baseline" / "bot_greedy.py",
 }
 DEFAULT_BOT_ID = "/baseline/bot_greedy"
+DEFAULT_DECISION_TIMEOUT = 1.0
+ALLOWED_DECISION_TIMEOUTS = {1.0, 3.0, 8.0}
 STATIC_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
@@ -41,6 +43,7 @@ class GameSession:
         human_seat: int,
         bot_id: str,
         bot_path: Path,
+        decision_timeout: float,
         seed: int | None,
     ) -> None:
         if mode not in {"human-human", "human-bot"}:
@@ -53,6 +56,7 @@ class GameSession:
         self.mode = mode
         self.players = players
         self.bot_id = bot_id
+        self.decision_timeout = decision_timeout
         self.human_seats = set(range(players)) if mode == "human-human" else {human_seat}
         self.rng = random.Random(seed if seed is not None else random.randrange(1 << 30))
         self.env = NimmtEnv(players=players, seed=seed)
@@ -66,7 +70,9 @@ class GameSession:
                 if seat not in self.human_seats:
                     self.bots[seat] = load_bot(bot_path) if bot_path.exists() else SystemBot(name=f"system_{seat}")
 
-    def apply_human_action(self, player: int, action: str) -> None:
+    def apply_human_action(self, player: int, action: str, decision_timeout: float | None = None) -> None:
+        if decision_timeout is not None:
+            self.decision_timeout = decision_timeout
         if self.forfeit is not None or self.env.game.finished():
             return
         if player not in self.human_seats:
@@ -92,7 +98,14 @@ class GameSession:
             bot = self.bots[player]
             bot_state = self.env.state(player)
             try:
-                action = bot.choose_action(bot_state)
+                action = choose_action_with_timeout(bot, bot_state, self.decision_timeout)
+            except BotTimeoutError as exc:
+                self.forfeit = {
+                    "winner": None,
+                    "status": "timeout",
+                    "error": f"player {player}: {exc}",
+                }
+                return
             except Exception as exc:  # noqa: BLE001
                 self.forfeit = {
                     "winner": None,
@@ -140,6 +153,7 @@ class GameSession:
                 "session": session_id,
                 "mode": self.mode,
                 "bot_id": self.bot_id,
+                "decision_timeout": self.decision_timeout,
                 "human_seats": sorted(self.human_seats),
                 "pending": dict(self.pending),
                 "next_human": next_human,
@@ -226,6 +240,7 @@ class Handler(BaseHTTPRequestHandler):
                     human_seat=human_seat,
                     bot_id=bot_id,
                     bot_path=self.server.bot_paths[bot_id],
+                    decision_timeout=parse_decision_timeout(data.get("decision_timeout", DEFAULT_DECISION_TIMEOUT)),
                     seed=seed,
                 )
                 with self.server.lock:
@@ -238,7 +253,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not session:
                     self.send_error_json("session not found", HTTPStatus.NOT_FOUND)
                     return
-                session.apply_human_action(int(data.get("player", -1)), str(data.get("action", "")))
+                timeout = parse_optional_decision_timeout(data.get("decision_timeout"))
+                session.apply_human_action(int(data.get("player", -1)), str(data.get("action", "")), timeout)
                 self.send_json(session.view(session_id))
                 return
             self.send_error(HTTPStatus.NOT_FOUND)
@@ -281,6 +297,20 @@ class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
         return
+
+
+def parse_decision_timeout(value: Any) -> float:
+    timeout = float(value)
+    if timeout not in ALLOWED_DECISION_TIMEOUTS:
+        allowed = ", ".join(f"{item:g}" for item in sorted(ALLOWED_DECISION_TIMEOUTS))
+        raise ValueError(f"decision_timeout must be one of: {allowed}")
+    return timeout
+
+
+def parse_optional_decision_timeout(value: Any) -> float | None:
+    if value is None:
+        return None
+    return parse_decision_timeout(value)
 
 
 def main() -> int:

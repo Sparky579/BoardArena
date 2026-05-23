@@ -4,12 +4,15 @@ const statusEl = document.getElementById("status");
 const modeEl = document.getElementById("mode");
 const seatEl = document.getElementById("seat");
 const botEl = document.getElementById("bot");
+const decisionTimeoutEl = document.getElementById("decisionTimeout");
 const wallHEl = document.getElementById("wallH");
 const wallVEl = document.getElementById("wallV");
 const newGameEl = document.getElementById("newGame");
 const logEl = document.getElementById("log");
 const p0El = document.getElementById("p0");
 const p1El = document.getElementById("p1");
+
+const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 
 let state = null;
 let busy = false;
@@ -26,13 +29,33 @@ const moveActions = {
 };
 
 async function api(path, payload) {
+  const controller = new AbortController();
+  const timeoutMs = requestTimeoutMs(payload);
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
   const options = payload
-    ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
-    : {};
-  const response = await fetch(path, options);
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "request failed");
-  return data;
+    ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: controller.signal }
+    : { signal: controller.signal };
+  try {
+    const response = await fetch(path, options);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "request failed");
+    return data;
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(`request timed out after ${(timeoutMs / 1000).toFixed(1)}s`);
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+function requestTimeoutMs(payload) {
+  const botSeconds = payload && Number(payload.decision_timeout);
+  if (Number.isFinite(botSeconds) && botSeconds > 0) {
+    return Math.max(DEFAULT_REQUEST_TIMEOUT_MS, (botSeconds + 5) * 1000);
+  }
+  return DEFAULT_REQUEST_TIMEOUT_MS;
 }
 
 async function loadBots() {
@@ -53,6 +76,7 @@ async function newGame() {
       mode: modeEl.value,
       human_seat: Number(seatEl.value),
       bot: botEl.value,
+      decision_timeout: Number(decisionTimeoutEl.value),
     });
     render();
     await advanceIfNeeded();
@@ -91,7 +115,7 @@ async function submitAction(action) {
 async function advanceIfNeeded() {
   while (state && state.bot_turn) {
     renderBusy("Bot is thinking...");
-    state = await api("/api/advance", { session: state.session });
+    state = await api("/api/advance", { session: state.session, decision_timeout: Number(decisionTimeoutEl.value) });
     render();
   }
 }
@@ -326,6 +350,7 @@ function renderControls() {
   modeEl.disabled = busy;
   seatEl.disabled = busy || modeEl.value === "human-human";
   botEl.disabled = busy || modeEl.value === "human-human";
+  decisionTimeoutEl.disabled = busy || modeEl.value === "human-human";
   wallHEl.disabled = disabled;
   wallVEl.disabled = disabled;
   wallHEl.classList.toggle("selected", selectedWallDirection === "H");

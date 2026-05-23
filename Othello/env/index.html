@@ -49,6 +49,15 @@
       </div>
 
       <div class="control-group">
+        <span class="control-label">Bot时间</span>
+        <select id="decisionTimeoutSelect" class="select-control" aria-label="Bot每步运行时间">
+          <option value="1" selected>快速 (1s)</option>
+          <option value="3">中等 (3s)</option>
+          <option value="8">沉思 (8s)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
         <span class="control-label">棋盘方向</span>
         <select id="orientationSelect" class="select-control" aria-label="棋盘方向">
           <option value="black" selected>黑方视角</option>

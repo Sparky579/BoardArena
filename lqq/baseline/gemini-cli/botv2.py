@@ -4,6 +4,7 @@ import time
 # Corrected diagonal jump rules and improved search stability.
 
 SAFETY_SECONDS = 0.90
+SAFETY_MARGIN_SECONDS = 0.15
 INF = 10**9
 
 # Bitboard constants
@@ -498,7 +499,7 @@ class Bot:
                     if act in legal:
                         return act
                     
-        self.deadline = time.perf_counter() + SAFETY_SECONDS
+        self.deadline = time.perf_counter() + _time_budget(state, SAFETY_SECONDS)
         self.nodes = 0
         best_action_overall = None
         
@@ -536,3 +537,10 @@ class Bot:
                 return action_str
                 
         return legal[0]
+
+
+def _time_budget(state, fallback):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return fallback

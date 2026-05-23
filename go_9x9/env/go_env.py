@@ -537,6 +537,11 @@ def choose_action_with_timeout(
     state: dict[str, Any],
     decision_timeout: float | None,
 ) -> Any:
+    state = dict(state)
+    if state.get("decision_timeout") is None:
+        state["decision_timeout"] = decision_timeout
+    if state.get("time_limit") is None:
+        state["time_limit"] = state.get("decision_timeout")
     if decision_timeout is None:
         return bot.choose_action(state)
 

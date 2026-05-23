@@ -79,7 +79,15 @@ class Bot:
             return legal[0]
 
         self.me = int(state.get("player_id", state.get("actor", 0)))
-        self.deadline = time.perf_counter() + TIME_BUDGET
+        
+        # Dynamically adjust deadline based on referee decision_timeout
+        referee_timeout = state.get("decision_timeout")
+        if referee_timeout:
+            budget = max(0.05, float(referee_timeout) - 0.15)
+        else:
+            budget = TIME_BUDGET
+            
+        self.deadline = time.perf_counter() + budget
         self._eval_cache.clear()
 
         node = self._node_from_state(state)

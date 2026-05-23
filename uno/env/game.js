@@ -8,6 +8,7 @@ const els = {
   mode: document.querySelector("#mode"),
   seat: document.querySelector("#seat"),
   bot: document.querySelector("#bot"),
+  decisionTimeout: document.querySelector("#decisionTimeout"),
   newGame: document.querySelector("#newGame"),
   p0Count: document.querySelector("#p0Count"),
   p1Count: document.querySelector("#p1Count"),
@@ -51,6 +52,7 @@ async function newGame() {
       mode: els.mode.value,
       human_seat: Number(els.seat.value),
       bot: els.bot.value,
+      decision_timeout: Number(els.decisionTimeout.value),
     }),
   });
   state.session = payload.session;
@@ -73,7 +75,7 @@ async function maybeAdvance() {
   window.setTimeout(async () => {
     const payload = await api("/api/advance", {
       method: "POST",
-      body: JSON.stringify({session: state.session}),
+      body: JSON.stringify({session: state.session, decision_timeout: Number(els.decisionTimeout.value)}),
     });
     render(payload);
     await maybeAdvance();
@@ -151,4 +153,3 @@ function showError(error) {
 }
 
 loadBots().then(newGame).catch(showError);
-

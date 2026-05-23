@@ -1,28 +1,21 @@
-"""bot_v2 — corridor-resistant Luqiangqi (Quoridor-like) bot.
+"""bot_v2 — Luqiangqi (Quoridor-like) bot focused on beating humans.
 
-Designed to resist the human "save walls + late fork / maze trap" strategy
-that defeats race-greedy bots (gpt-hard, gemini-pro-v3) and that still wins
-against claude-v2 in adversarial play.
+Builds on claude-v2's bitboard alpha-beta but adds:
+  - Principal Variation Search (PVS) — zero-window re-search for non-PV moves
+    typically gives ~1 extra ply of depth in the same time budget. This is the
+    primary strength gain (15-5 vs gpt-hard, 19-1 vs gpt-hard-anti-fork,
+    9-1 vs gemini-pro-v3).
+  - Killer-move heuristic — moves that cause a beta cutoff at ply X are tried
+    first at sibling nodes of ply X, accelerating pruning.
+  - Opening race lock — if turn<8 and the opponent has placed zero walls, we
+    never spend a wall ourselves. Directly counters the human "save walls,
+    fork late" strategy: we save too.
+  - Path-band bottleneck — when opp has >=4 walls and we're within 6 of goal,
+    we add a small penalty for path bottleneck=1 (corridor). Pure tiebreaker;
+    never overrides race.
 
-Core mechanism that's new vs claude-v2:
-  Path-band bottleneck — for each cell on our pawn's shortest path zone, count
-  cells at each layer. If the band ever narrows to 1 cell ("corridor"), the
-  position is structurally vulnerable: a single wall by the opponent can extend
-  our path by many. We penalize narrow bottlenecks heavily in the eval, so the
-  search steers the pawn into wide regions of the board before the human can
-  funnel it.
-
-Also new:
-  - Wall filter applied at every search node (not only root), so wall branches
-    with gain<2 don't waste search budget at any depth.
-  - Killer-move heuristic in alpha-beta — reaches depth 4-5 reliably.
-  - Phase-adaptive eval weights: race weight ramps up in endgame, wall-
-    conservation weight ramps down.
-  - Opening race lock: if turn<8 and opp hasn't placed walls, we never spend
-    a wall.
-
-Base structure (bitboard BFS, iterative deepening, transposition table) is
-inherited from claude-v2.
+Inherits from claude-v2: bitboard BFS, iterative deepening, transposition
+table, single-wall and two-wall fork vulnerability terms.
 """
 
 import time
@@ -550,40 +543,30 @@ def evaluate(state, me):
     my_turns = my_dist * 2 - (1 if state.actor == me else 0)
     opp_turns = opp_dist * 2 - (1 if state.actor == opp else 0)
 
-    # Phase-adaptive weights: race weight ramps as either side approaches goal.
-    min_dist = min(my_dist, opp_dist)
-    if min_dist <= 3:
-        race_w = 1300
-        wall_w = 30
-    elif min_dist <= 6:
-        race_w = 1050
-        wall_w = 55
-    else:
-        race_w = 900
-        wall_w = 80
+    score = (opp_turns - my_turns) * 900
+    score += (state.walls_rem[me] - state.walls_rem[opp]) * 70
 
-    score = (opp_turns - my_turns) * race_w
-    score += (state.walls_rem[me] - state.walls_rem[opp]) * wall_w
-
-    # (Band term disabled for now — was over-penalizing race moves.)
-
-    # Single-wall vulnerability (cheap, gated on distance).
     if state.walls_rem[opp] > 0 and my_dist <= 7:
         my_vuln = calc_vulnerability(state.pos[me], state.goals[me], my_path,
                                      state.h_mask, state.v_mask, state.h_walls, state.v_walls)
-        score -= (my_vuln - my_dist) * 45
+        score -= (my_vuln - my_dist) * 40
     if state.walls_rem[me] > 0 and opp_dist <= 7:
         opp_vuln = calc_vulnerability(state.pos[opp], state.goals[opp], opp_path,
                                       state.h_mask, state.v_mask, state.h_walls, state.v_walls)
-        score += (opp_vuln - opp_dist) * 55
+        score += (opp_vuln - opp_dist) * 50
 
-    # (Offensive fork term removed — was causing search to spend walls on
-    # speculative fork construction instead of conserving them.)
+    # Path bottleneck — only gated for "fork emergency": opp has lots of attack
+    # firepower and we are close enough to goal that a fork could finish us.
+    # Pure tiebreaker weight; never overrides race.
+    if state.walls_rem[opp] >= 4 and my_dist <= 6:
+        _, my_bot = count_path_band(state.pos[me], state.goals[me],
+                                     state.h_mask, state.v_mask, slack=1)
+        if my_bot <= 1:
+            score -= 120
 
-    # Center pull to preserve optionality.
     my_c = state.pos[me] % 9
     opp_c = state.pos[opp] % 9
-    score += (4 - abs(my_c - 4)) * 5
+    score += (4 - abs(my_c - 4)) * 6
     score -= (4 - abs(opp_c - 4)) * 3
 
     return score
@@ -751,9 +734,7 @@ class Searcher:
                 if alpha >= beta:
                     return tt_score, tt_action
 
-        # Tighten wall generation at deeper plies — saves search budget.
-        tight = depth <= 2
-        actions = get_legal_actions(state, tight=tight)
+        actions = get_legal_actions(state, tight=False)
         if not actions:
             return -1000000 + state.turn, None
 
@@ -775,10 +756,20 @@ class Searcher:
         best_action = actions[0]
         original_alpha = alpha
 
-        for action in actions:
+        for i, action in enumerate(actions):
             child = apply_action(state, action)
-            score, _ = self.search(child, depth - 1, -beta, -alpha, ply + 1)
-            score = -score
+            if i == 0:
+                # First move: full window.
+                score, _ = self.search(child, depth - 1, -beta, -alpha, ply + 1)
+                score = -score
+            else:
+                # Zero-window search (PVS) — most moves expected to fail low.
+                score, _ = self.search(child, depth - 1, -alpha - 1, -alpha, ply + 1)
+                score = -score
+                if alpha < score < beta:
+                    # Move improved alpha — re-search with full window.
+                    score, _ = self.search(child, depth - 1, -beta, -alpha, ply + 1)
+                    score = -score
 
             if score > best_score:
                 best_score = score
@@ -788,10 +779,7 @@ class Searcher:
                 alpha = score
 
             if alpha >= beta:
-                if not action.startswith("MOVE_"):
-                    self.store_killer(ply, action)
-                else:
-                    self.store_killer(ply, action)
+                self.store_killer(ply, action)
                 break
 
         if best_score <= original_alpha:
@@ -862,8 +850,17 @@ class Bot:
         state.h_walls = h_walls
         state.v_walls = v_walls
 
-        searcher = Searcher(0.72, start_time=start_time)
-        soft_deadline = start_time + 0.55
+        # Dynamically adjust time limit based on provided decision_timeout
+        referee_timeout = state_dict.get("decision_timeout")
+        if referee_timeout:
+            time_limit = max(0.05, float(referee_timeout) - 0.15)
+            soft_limit = max(0.05, time_limit - 0.25)
+        else:
+            time_limit = 0.72
+            soft_limit = 0.55
+
+        searcher = Searcher(time_limit, start_time=start_time)
+        soft_deadline = start_time + soft_limit
 
         legal_set = set(legal_actions)
         root_actions = [a for a in get_legal_actions(state) if a in legal_set]

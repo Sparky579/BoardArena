@@ -27,7 +27,7 @@ MAX_PLY = 48
 
 MAX_DEPTH = 4               # strength cap; never search deeper than this
 DEFAULT_BUDGET = 1.0        # safety wall-clock budget (still well under 1.6 s)
-TIME_HARD_RATIO = 0.85
+SAFETY_MARGIN_SECONDS = 0.15
 
 
 # ---------- material and game phase ----------
@@ -399,7 +399,7 @@ class Engine:
 
     def choose(self, board, budget=DEFAULT_BUDGET):
         self.start_time = time.perf_counter()
-        self.time_hard = budget * TIME_HARD_RATIO
+        self.time_hard = budget
         self.nodes = 0
 
         legal = list(board.legal_moves)
@@ -435,7 +435,7 @@ class Bot:
         if len(legal) == 1:
             return legal[0]
         board = chess.Board(state["fen"])
-        move = self.engine.choose(board, budget=DEFAULT_BUDGET)
+        move = self.engine.choose(board, budget=_time_budget(state, DEFAULT_BUDGET))
         if move is None:
             return legal[0]
         uci = move.uci()
@@ -449,11 +449,18 @@ def choose_action(state):
     if len(legal) == 1:
         return legal[0]
     board = chess.Board(state["fen"])
-    move = _MODULE_ENGINE.choose(board, budget=DEFAULT_BUDGET)
+    move = _MODULE_ENGINE.choose(board, budget=_time_budget(state, DEFAULT_BUDGET))
     if move is None:
         return legal[0]
     uci = move.uci()
     return uci if uci in legal else legal[0]
+
+
+def _time_budget(state, fallback):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return fallback
 
 
 _MODULE_ENGINE = Engine()

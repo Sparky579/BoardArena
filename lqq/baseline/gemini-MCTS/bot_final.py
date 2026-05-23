@@ -1,12 +1,9 @@
-"""Gemini MCTS Bot.
+"""Gemini MCTS Bot Final.
 
-A from-scratch highly optimized Monte Carlo Tree Search (MCTS) bot for Quoridor.
+The ultimate iteration of the Heuristic MCTS Bot.
 Features:
-- Pure Python MCTS with AlphaZero-style PUCT selection.
-- Bitboard-based fast BFS pathfinding for both move generation and leaf evaluation.
-- "Heuristic PUCT": Replaces random rollouts with a strong evaluation function at leaf nodes.
-- Heavy Pruning: Only explores tactical walls (walls that intersect shortest paths).
-- Dynamic Priors: Biases the search heavily towards shortest path moves and blocking walls.
+- Heavy Trap Avoidance: Massively penalizes states where the bot is vulnerable to a 50-50 trap.
+- Heavy Trap Setting: Increases priors for ALL nearby walls, even if they don't immediately delay the opponent, ensuring MCTS searches into 50-50 setups.
 """
 
 import time
@@ -25,6 +22,7 @@ MOVE_DELTAS = {
 
 def choose_action(state):
     PATH_CACHE.clear()
+    VULN_CACHE.clear()
     return Bot().choose_action(state)
 
 
@@ -35,6 +33,7 @@ def _time_budget(state, fallback):
     return fallback
 
 PATH_CACHE = {}
+VULN_CACHE = {}
 
 def bfs_path(pos, target_row, h_mask, v_mask):
     key = (pos, target_row, h_mask, v_mask)
@@ -99,6 +98,48 @@ def bfs_path(pos, target_row, h_mask, v_mask):
         
     PATH_CACHE[key] = (1000, [])
     return 1000, []
+
+def get_intersecting_walls_list(path):
+    walls = []
+    for i in range(len(path) - 1):
+        u, v = path[i], path[i+1]
+        if abs(u - v) == 9:
+            top = min(u, v)
+            r, c = top // 9, top % 9
+            if c < 8: walls.append(('H', r, c))
+            if c > 0: walls.append(('H', r, c - 1))
+        elif abs(u - v) == 1:
+            left = min(u, v)
+            r, c = left // 9, left % 9
+            if r < 8: walls.append(('V', r, c))
+            if r > 0: walls.append(('V', r - 1, c))
+    return walls
+
+def calc_vulnerability(pos, target_row, path, h_mask, v_mask, h_walls, v_walls):
+    key = (pos, target_row, h_mask, v_mask, h_walls, v_walls)
+    if key in VULN_CACHE:
+        return VULN_CACHE[key]
+        
+    walls = get_intersecting_walls_list(path)
+    base_dist = len(path) - 1
+    if base_dist < 0: base_dist = 0
+    max_dist = base_dist
+    
+    for w in walls:
+        d, r, c = w
+        if is_valid_wall(d, r, c, h_walls, v_walls):
+            if d == 'H':
+                new_h = h_mask | (1 << (r * 9 + c)) | (1 << (r * 9 + c + 1))
+                dist, _ = bfs_path(pos, target_row, new_h, v_mask)
+            else:
+                new_v = v_mask | (1 << (r * 9 + c)) | (1 << ((r + 1) * 9 + c))
+                dist, _ = bfs_path(pos, target_row, h_mask, new_v)
+                
+            if dist < 1000 and dist > max_dist: 
+                max_dist = dist
+                
+    VULN_CACHE[key] = max_dist
+    return max_dist
 
 def get_intersecting_walls_set(path):
     walls = set()
@@ -270,12 +311,15 @@ def get_legal_actions_with_priors(state, my_dist, my_path, opp_dist, opp_path):
                 if od >= 1000: continue
                 
                 if w in opp_path_walls:
-                    if od > opp_dist:
+                    if od > opp_dist + 2:
+                        actions.append((f"WALL_{d}_{wr}_{wc}", 50.0))
+                    elif od > opp_dist:
                         actions.append((f"WALL_{d}_{wr}_{wc}", 8.0))
                     else:
                         actions.append((f"WALL_{d}_{wr}_{wc}", 1.5))
                 else:
-                    actions.append((f"WALL_{d}_{wr}_{wc}", 0.2))
+                    # Give a decent prior to nearby walls so MCTS will explore trap ideas
+                    actions.append((f"WALL_{d}_{wr}_{wc}", 2.5))
                     
     return actions
 
@@ -294,7 +338,7 @@ class Node:
 class MCTS:
     def __init__(self, time_limit):
         self.time_limit = time_limit
-        self.c_puct = 2.0
+        self.c_puct = 1.5
         self.root = None
         
     def expand_and_evaluate(self, node):
@@ -314,6 +358,18 @@ class MCTS:
         my_turns = my_dist * 2
         opp_turns = opp_dist * 2 - 1 
         race_diff = opp_turns - my_turns 
+        
+        my_vuln = my_dist
+        if state.walls_rem[opp] > 0:
+            my_vuln = calc_vulnerability(state.pos[me], state.goals[me], my_path, state.h_mask, state.v_mask, state.h_walls, state.v_walls)
+            
+        opp_vuln = opp_dist
+        if state.walls_rem[me] > 0:
+            opp_vuln = calc_vulnerability(state.pos[opp], state.goals[opp], opp_path, state.h_mask, state.v_mask, state.h_walls, state.v_walls)
+            
+        # Heavy penalty for being vulnerable to a trap
+        race_diff -= (my_vuln - my_dist) * 2.5
+        race_diff += (opp_vuln - opp_dist) * 2.5
         
         value = math.tanh(race_diff * 0.25)
         
@@ -406,7 +462,7 @@ class MCTS:
                 current_val = -current_val
 
 class Bot:
-    name = "gemini_MCTS"
+    name = "gemini_MCTS_final"
 
     def __init__(self):
         self.mcts = MCTS(0.85)
@@ -417,7 +473,10 @@ class Bot:
             return ""
         if len(legal_actions) == 1:
             return legal_actions[0]
-        self.mcts.time_limit = _time_budget(state_dict, 0.85)
+            
+        referee_timeout = state_dict.get("decision_timeout")
+        if referee_timeout: self.mcts.time_limit = _time_budget(state_dict, 0.85)
+        else: self.mcts.time_limit = 0.85
             
         me = int(state_dict.get("player_id", state_dict.get("actor", 0)))
         

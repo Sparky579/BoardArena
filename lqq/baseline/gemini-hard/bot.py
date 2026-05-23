@@ -1,6 +1,8 @@
 import time
 import collections
 
+SAFETY_MARGIN_SECONDS = 0.15
+
 # Board constants
 BOARD_SIZE = 9
 TOTAL_SQUARES = BOARD_SIZE * BOARD_SIZE
@@ -83,6 +85,9 @@ class Bot:
 
     def choose_action(self, state):
         self.start_time = time.time()
+        timeout = state.get("decision_timeout") or state.get("time_limit")
+        if timeout:
+            self.time_limit = max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
         self.transposition_table = {}
         best_action = state["legal_actions"][0]
         try:

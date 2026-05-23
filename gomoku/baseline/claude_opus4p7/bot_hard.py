@@ -36,7 +36,7 @@ FILES = "abcdefghijklmno"
 DIRECTIONS = ((0, 1), (1, 0), (1, 1), (1, -1))
 
 TIME_BUDGET = 1.7
-TIME_HARD_RATIO = 0.92
+SAFETY_MARGIN_SECONDS = 0.15
 TIME_SOFT_RATIO = 0.55
 
 WIN_SCORE = 10**9
@@ -482,8 +482,9 @@ class Engine:
         if len(legal) == 1:
             return legal[0]
 
+        budget = _time_budget(state, budget)
         start = time.perf_counter()
-        self.deadline = start + budget * TIME_HARD_RATIO
+        self.deadline = start + budget
         self.deadline_soft = start + budget * TIME_SOFT_RATIO
         self.nodes = 0
         if len(self.tt) > 200_000:
@@ -566,3 +567,10 @@ _MODULE_ENGINE = Engine()
 
 def choose_action(state) -> str:
     return _MODULE_ENGINE.choose(state)
+
+
+def _time_budget(state, fallback):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return fallback

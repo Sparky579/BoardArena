@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-from uno_env import DEFAULT_MAX_PLIES, UnoEnv, SystemBot, load_bot
+from uno_env import DEFAULT_MAX_PLIES, BotTimeoutError, UnoEnv, SystemBot, choose_action_with_timeout, load_bot
 
 
 HERE = Path(__file__).resolve().parent
@@ -25,6 +25,8 @@ DEFAULT_BOTS = {
     "/gpt/bot_hard": HERE.parent / "baseline" / "gpt" / "bot_hard.py",
 }
 DEFAULT_BOT_ID = "/gpt/bot_hard"
+DEFAULT_DECISION_TIMEOUT = 1.0
+ALLOWED_DECISION_TIMEOUTS = {1.0, 3.0, 8.0}
 STATIC_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
@@ -41,6 +43,7 @@ class GameSession:
         human_seat: int,
         bot_id: str,
         bot_path: Path,
+        decision_timeout: float,
         seed: int | None,
         max_plies: int,
     ) -> None:
@@ -51,6 +54,7 @@ class GameSession:
 
         self.mode = mode
         self.bot_id = bot_id
+        self.decision_timeout = decision_timeout
         self.human_seats = {0, 1} if mode == "human-human" else {human_seat}
         self.rng = random.Random(seed if seed is not None else random.randrange(1 << 30))
         self.env = UnoEnv(seed=seed, max_plies=max_plies)
@@ -73,7 +77,9 @@ class GameSession:
             raise ValueError("illegal action")
         self._push_action(action, source="human")
 
-    def advance_bots(self) -> None:
+    def advance_bots(self, decision_timeout: float | None = None) -> None:
+        if decision_timeout is not None:
+            self.decision_timeout = decision_timeout
         guard = 0
         while self.forfeit is None:
             state = self.env.state()
@@ -86,7 +92,14 @@ class GameSession:
             actor = state["actor"]
             bot = self.bots[actor]
             try:
-                action = bot.choose_action(state)
+                action = choose_action_with_timeout(bot, state, self.decision_timeout)
+            except BotTimeoutError as exc:
+                self.forfeit = {
+                    "winner": 1 - actor,
+                    "status": "timeout",
+                    "error": str(exc),
+                }
+                return
             except Exception as exc:  # noqa: BLE001
                 self.forfeit = {
                     "winner": 1 - actor,
@@ -135,6 +148,7 @@ class GameSession:
                 "mode": self.mode,
                 "bot_id": self.bot_id,
                 "bot_name": self.bot_id,
+                "decision_timeout": self.decision_timeout,
                 "human_seats": sorted(self.human_seats),
                 "human_turn": human_turn,
                 "bot_turn": bot_turn,
@@ -234,6 +248,7 @@ class Handler(BaseHTTPRequestHandler):
                     human_seat=human_seat,
                     bot_id=bot_id,
                     bot_path=self.server.bot_paths[bot_id],
+                    decision_timeout=parse_decision_timeout(data.get("decision_timeout", DEFAULT_DECISION_TIMEOUT)),
                     seed=seed,
                     max_plies=self.server.max_plies,
                 )
@@ -259,7 +274,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not session:
                     self.send_error_json("session not found", HTTPStatus.NOT_FOUND)
                     return
-                session.advance_bots()
+                timeout = parse_optional_decision_timeout(data.get("decision_timeout"))
+                session.advance_bots(timeout)
                 self.send_json(session.view(session_id))
                 return
 
@@ -328,6 +344,20 @@ class Handler(BaseHTTPRequestHandler):
         return
 
 
+def parse_decision_timeout(value: Any) -> float:
+    timeout = float(value)
+    if timeout not in ALLOWED_DECISION_TIMEOUTS:
+        allowed = ", ".join(f"{item:g}" for item in sorted(ALLOWED_DECISION_TIMEOUTS))
+        raise ValueError(f"decision_timeout must be one of: {allowed}")
+    return timeout
+
+
+def parse_optional_decision_timeout(value: Any) -> float | None:
+    if value is None:
+        return None
+    return parse_decision_timeout(value)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the BoardArena UNO browser UI")
     parser.add_argument("--host", default="127.0.0.1")
@@ -376,4 +406,3 @@ def bind_server(args: argparse.Namespace) -> tuple[UnoServer, int]:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

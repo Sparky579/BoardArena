@@ -19,6 +19,7 @@ NOT_A_FILE = 0xFEFEFEFEFEFEFEFE
 NOT_H_FILE = 0x7F7F7F7F7F7F7F7F
 CORNER_MASK = (1 << 0) | (1 << 7) | (1 << 56) | (1 << 63)
 TIME_LIMIT_SECONDS = 1.82
+SAFETY_MARGIN_SECONDS = 0.15
 WIN_SCORE = 1_000_000
 INF = 10_000_000
 TT_MAX_SIZE = 220_000
@@ -85,7 +86,7 @@ def choose_action(state):
     empties = 64 - (me | opp).bit_count()
 
     global _deadline, _nodes
-    _deadline = time.perf_counter() + TIME_LIMIT_SECONDS
+    _deadline = time.perf_counter() + _time_budget(state)
     _nodes = 0
 
     best_move = _fallback_move(me, opp, root_legal)
@@ -405,6 +406,13 @@ def _parse_board(rows):
 def _check_time():
     if time.perf_counter() >= _deadline:
         raise SearchTimeout
+
+
+def _time_budget(state):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return TIME_LIMIT_SECONDS
 
 
 def _trim_tt():

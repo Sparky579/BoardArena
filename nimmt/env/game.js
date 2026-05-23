@@ -7,6 +7,7 @@ const modeEl = document.getElementById("mode");
 const playersEl = document.getElementById("players");
 const seatEl = document.getElementById("seat");
 const botEl = document.getElementById("bot");
+const decisionTimeoutEl = document.getElementById("decisionTimeout");
 const newGameEl = document.getElementById("newGame");
 
 let state = null;
@@ -53,6 +54,7 @@ async function newGame() {
     players: Number(playersEl.value),
     human_seat: Number(seatEl.value),
     bot: botEl.value,
+    decision_timeout: Number(decisionTimeoutEl.value),
   });
   render();
 }
@@ -63,6 +65,7 @@ async function choose(action) {
     session: state.session,
     player: state.next_human,
     action,
+    decision_timeout: Number(decisionTimeoutEl.value),
   });
   render();
 }

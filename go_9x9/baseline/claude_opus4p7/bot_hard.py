@@ -46,7 +46,7 @@ FILES = "abcdefghi"
 KOMI = 6.5
 
 TIME_BUDGET = 1.75
-TIME_HARD_RATIO = 0.92
+SAFETY_MARGIN_SECONDS = 0.15
 MAX_PLAYOUT_MOVES = 220
 RAVE_EQUIV = 1500.0
 UCB_C = 0.95
@@ -593,7 +593,7 @@ class Engine:
         opp_passed: bool = False,
     ) -> int:
         start = time.perf_counter()
-        deadline = start + budget * TIME_HARD_RATIO
+        deadline = start + budget
 
         self._maybe_reuse_tree(board, color)
         root = self.root
@@ -800,7 +800,7 @@ class Bot:
         self._engine.komi = komi
 
         point = self._engine.choose(
-            board, color, budget=TIME_BUDGET, opp_passed=opp_passed,
+            board, color, budget=_time_budget(state, TIME_BUDGET), opp_passed=opp_passed,
         )
         action = point_to_action(point)
         legal_set = set(legal)
@@ -832,3 +832,10 @@ def choose_action(state: dict[str, Any]) -> str:
     bot = Bot()
     bot._engine = _MODULE_ENGINE
     return bot.choose_action(state)
+
+
+def _time_budget(state: dict[str, Any], fallback: float) -> float:
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return fallback

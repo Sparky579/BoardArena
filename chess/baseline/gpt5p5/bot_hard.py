@@ -21,6 +21,7 @@ name = "gpt5p5_hard"
 
 MAX_TIME_SECONDS = float(os.environ.get("BOARDARENA_CHESS_HARD_TIME", "1.6"))
 ENDGAME_TIME_SECONDS = float(os.environ.get("BOARDARENA_CHESS_HARD_ENDGAME_TIME", "1.6"))
+SAFETY_MARGIN_SECONDS = 0.15
 MAX_DEPTH = 64
 QUIESCENCE_DEPTH = 8
 INF = 10_000_000
@@ -322,7 +323,7 @@ def choose_action(state):
     if book_move is not None:
         return book_move
 
-    searcher = Searcher(board, legal)
+    searcher = Searcher(board, legal, state)
     try:
         action = searcher.search()
     except Exception:  # noqa: BLE001 - a safe legal fallback is better than forfeiting.
@@ -331,11 +332,11 @@ def choose_action(state):
 
 
 class Searcher:
-    def __init__(self, board, legal_actions):
+    def __init__(self, board, legal_actions, state):
         self.board = board
         self.legal_actions = set(legal_actions)
         self.start_time = time.monotonic()
-        self.time_budget = _time_budget(board, len(legal_actions))
+        self.time_budget = _time_budget(board, len(legal_actions), state)
         self.deadline = self.start_time + self.time_budget
         self.nodes = 0
         self.tt = _GLOBAL_TT
@@ -1239,7 +1240,10 @@ def _fallback_move(board, legal):
     return best_move.uci()
 
 
-def _time_budget(board, legal_count):
+def _time_budget(board, legal_count, state=None):
+    timeout = (state or {}).get("decision_timeout") or (state or {}).get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
     pieces = len(board.piece_map())
     if pieces <= 12:
         return ENDGAME_TIME_SECONDS

@@ -27,6 +27,13 @@ def choose_action(state):
     VULN_CACHE.clear()
     return Bot().choose_action(state)
 
+
+def _time_budget(state, fallback):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - 0.15)
+    return fallback
+
 PATH_CACHE = {}
 VULN_CACHE = {}
 
@@ -460,7 +467,7 @@ class Bot:
         state.v_walls = v_walls
         
         # Slightly more time allowance if possible, but 0.45 is safe.
-        searcher = Searcher(0.45)
+        searcher = Searcher(_time_budget(state_dict, 0.45))
         
         legal_set = set(legal_actions)
         root_actions = [a for a in get_legal_actions(state) if a in legal_set]

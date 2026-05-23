@@ -25,6 +25,7 @@ MOVE_DELTAS = {
 
 def choose_action(state):
     PATH_CACHE.clear()
+    VULN_CACHE.clear()
     return Bot().choose_action(state)
 
 
@@ -35,66 +36,78 @@ def _time_budget(state, fallback):
     return fallback
 
 PATH_CACHE = {}
+VULN_CACHE = {}
+
+RIGHT_MASK = 0
+for r in range(9): RIGHT_MASK |= (1 << (r * 9 + 8))
+NOT_RIGHT_MASK = ((1 << 81) - 1) ^ RIGHT_MASK
+
+LEFT_MASK = 0
+for r in range(9): LEFT_MASK |= (1 << (r * 9))
+NOT_LEFT_MASK = ((1 << 81) - 1) ^ LEFT_MASK
+
+def bfs_dist_only(pos, target_row, h_mask, v_mask):
+    front = 1 << pos
+    visited = front
+    dist = 0
+    target_mask = 0x1FF if target_row == 0 else (0x1FF << 72)
+    
+    while front:
+        if front & target_mask:
+            return dist
+            
+        up = (front >> 9) & ~h_mask
+        down = ((front & ~h_mask) << 9) & 0x1FFFFFFFFFFFFFFFFFFFF
+        left = ((front & NOT_LEFT_MASK) >> 1) & ~v_mask
+        right = (((front & NOT_RIGHT_MASK) & ~v_mask) << 1) & 0x1FFFFFFFFFFFFFFFFFFFF
+        
+        front = (up | down | left | right) & ~visited
+        visited |= front
+        dist += 1
+        
+    return 1000
 
 def bfs_path(pos, target_row, h_mask, v_mask):
     key = (pos, target_row, h_mask, v_mask)
     if key in PATH_CACHE:
         return PATH_CACHE[key]
         
-    q = [0] * 81
-    q[0] = pos
-    visited = 1 << pos
+    front = 1 << pos
+    visited = front
     dist = 0
-    parent = [-1] * 81
+    target_mask = 0x1FF if target_row == 0 else (0x1FF << 72)
+    history = [front]
     
-    head = 0
-    tail = 1
-    
-    while head < tail:
-        level_tail = tail
-        for i in range(head, level_tail):
-            curr = q[i]
-            r = curr // 9
-            if r == target_row:
-                path = []
-                p = curr
-                while p != -1:
-                    path.append(p)
-                    p = parent[p]
-                path.reverse()
-                PATH_CACHE[key] = (dist, path)
-                return dist, path
-                
-            if r > 0:
-                nxt = curr - 9
-                if not (h_mask & (1 << nxt)) and not (visited & (1 << nxt)):
-                    visited |= (1 << nxt)
-                    parent[nxt] = curr
-                    q[tail] = nxt
-                    tail += 1
-            if r < 8:
-                nxt = curr + 9
-                if not (h_mask & (1 << curr)) and not (visited & (1 << nxt)):
-                    visited |= (1 << nxt)
-                    parent[nxt] = curr
-                    q[tail] = nxt
-                    tail += 1
-            c = curr % 9
-            if c > 0:
-                nxt = curr - 1
-                if not (v_mask & (1 << nxt)) and not (visited & (1 << nxt)):
-                    visited |= (1 << nxt)
-                    parent[nxt] = curr
-                    q[tail] = nxt
-                    tail += 1
-            if c < 8:
-                nxt = curr + 1
-                if not (v_mask & (1 << curr)) and not (visited & (1 << nxt)):
-                    visited |= (1 << nxt)
-                    parent[nxt] = curr
-                    q[tail] = nxt
-                    tail += 1
-        head = level_tail
+    while front:
+        if front & target_mask:
+            curr_bit = (front & target_mask)
+            curr_bit = curr_bit & -curr_bit
+            curr = curr_bit.bit_length() - 1
+            
+            path = [curr]
+            for d in range(dist - 1, -1, -1):
+                prev_layer = history[d]
+                if curr + 9 < 81 and (prev_layer & (1 << (curr + 9))) and not (h_mask & (1 << curr)):
+                    curr += 9
+                elif curr - 9 >= 0 and (prev_layer & (1 << (curr - 9))) and not (h_mask & (1 << (curr - 9))):
+                    curr -= 9
+                elif (curr + 1) % 9 != 0 and (prev_layer & (1 << (curr + 1))) and not (v_mask & (1 << curr)):
+                    curr += 1
+                elif curr % 9 != 0 and (prev_layer & (1 << (curr - 1))) and not (v_mask & (1 << (curr - 1))):
+                    curr -= 1
+                path.append(curr)
+            path.reverse()
+            PATH_CACHE[key] = (dist, path)
+            return dist, path
+            
+        up = (front >> 9) & ~h_mask
+        down = ((front & ~h_mask) << 9) & 0x1FFFFFFFFFFFFFFFFFFFF
+        left = ((front & NOT_LEFT_MASK) >> 1) & ~v_mask
+        right = (((front & NOT_RIGHT_MASK) & ~v_mask) << 1) & 0x1FFFFFFFFFFFFFFFFFFFF
+        
+        front = (up | down | left | right) & ~visited
+        visited |= front
+        history.append(front)
         dist += 1
         
     PATH_CACHE[key] = (1000, [])
@@ -115,6 +128,35 @@ def get_intersecting_walls_set(path):
             if r < 8: walls.add(('V', r, c))
             if r > 0: walls.add(('V', r - 1, c))
     return walls
+
+def get_intersecting_walls_list(path):
+    return list(get_intersecting_walls_set(path))
+
+def calc_vulnerability(pos, target_row, path, h_mask, v_mask, h_walls, v_walls):
+    key = (pos, target_row, h_mask, v_mask, h_walls, v_walls)
+    if key in VULN_CACHE:
+        return VULN_CACHE[key]
+        
+    walls = get_intersecting_walls_list(path)
+    base_dist = len(path) - 1
+    if base_dist < 0: base_dist = 0
+    max_dist = base_dist
+    
+    for w in walls:
+        d, r, c = w
+        if is_valid_wall(d, r, c, h_walls, v_walls):
+            if d == 'H':
+                new_h = h_mask | (1 << (r * 9 + c)) | (1 << (r * 9 + c + 1))
+                dist = bfs_dist_only(pos, target_row, new_h, v_mask)
+            else:
+                new_v = v_mask | (1 << (r * 9 + c)) | (1 << ((r + 1) * 9 + c))
+                dist = bfs_dist_only(pos, target_row, h_mask, new_v)
+                
+            if dist < 1000 and dist > max_dist: 
+                max_dist = dist
+                
+    VULN_CACHE[key] = max_dist
+    return max_dist
 
 def is_valid_wall(d, r, c, h_walls, v_walls):
     if r < 0 or r > 7 or c < 0 or c > 7: return False
@@ -270,7 +312,9 @@ def get_legal_actions_with_priors(state, my_dist, my_path, opp_dist, opp_path):
                 if od >= 1000: continue
                 
                 if w in opp_path_walls:
-                    if od > opp_dist:
+                    if od > opp_dist + 2:
+                        actions.append((f"WALL_{d}_{wr}_{wc}", 50.0))
+                    elif od > opp_dist:
                         actions.append((f"WALL_{d}_{wr}_{wc}", 8.0))
                     else:
                         actions.append((f"WALL_{d}_{wr}_{wc}", 1.5))
@@ -311,9 +355,26 @@ class MCTS:
         if my_dist >= 1000: return -1.0
         if opp_dist >= 1000: return 1.0
             
-        my_turns = my_dist * 2
-        opp_turns = opp_dist * 2 - 1 
+        my_turns = my_dist * 2 - 1
+        opp_turns = opp_dist * 2
+        
+        if state.walls_rem[me] == 0 and state.walls_rem[opp] == 0:
+            if my_turns < opp_turns:
+                return 1.0
+            elif opp_turns < my_turns:
+                return -1.0
+        
+        my_vuln = my_dist
+        if state.walls_rem[opp] > 0:
+            my_vuln = calc_vulnerability(state.pos[me], state.goals[me], my_path, state.h_mask, state.v_mask, state.h_walls, state.v_walls)
+            
+        opp_vuln = opp_dist
+        if state.walls_rem[me] > 0:
+            opp_vuln = calc_vulnerability(state.pos[opp], state.goals[opp], opp_path, state.h_mask, state.v_mask, state.h_walls, state.v_walls)
+            
         race_diff = opp_turns - my_turns 
+        race_diff -= (my_vuln - my_dist) * 1.5
+        race_diff += (opp_vuln - opp_dist) * 1.5
         
         value = math.tanh(race_diff * 0.25)
         
@@ -417,7 +478,10 @@ class Bot:
             return ""
         if len(legal_actions) == 1:
             return legal_actions[0]
-        self.mcts.time_limit = _time_budget(state_dict, 0.85)
+            
+        referee_timeout = state_dict.get("decision_timeout")
+        if referee_timeout: self.mcts.time_limit = _time_budget(state_dict, 0.85)
+        else: self.mcts.time_limit = 0.85
             
         me = int(state_dict.get("player_id", state_dict.get("actor", 0)))
         

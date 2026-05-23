@@ -7,6 +7,7 @@ const humanBotBtn = document.getElementById("humanBotBtn");
 const blackSeatBtn = document.getElementById("blackSeatBtn");
 const whiteSeatBtn = document.getElementById("whiteSeatBtn");
 const botSelect = document.getElementById("botSelect");
+const decisionTimeoutSelect = document.getElementById("decisionTimeoutSelect");
 const orientationSelect = document.getElementById("orientationSelect");
 const blackPlayer = document.getElementById("blackPlayer");
 const whitePlayer = document.getElementById("whitePlayer");
@@ -30,6 +31,7 @@ let data = null;
 let mode = "human-bot";
 let humanSeat = 0;
 let botId = "/claude_opus4p7/bot_hard";
+let decisionTimeout = 1;
 let orientation = "black";
 let advanceTimer = 0;
 let advanceInFlight = false;
@@ -87,7 +89,7 @@ async function newGame() {
   try {
     clearPendingAdvance();
     advanceInFlight = false;
-    const body = await api("/api/new", { mode, human_seat: humanSeat, bot: botId });
+    const body = await api("/api/new", { mode, human_seat: humanSeat, bot: botId, decision_timeout: decisionTimeout });
     if (version !== stateVersion) return;
     sessionId = body.session;
     data = body;
@@ -123,7 +125,7 @@ async function advanceBot() {
   const activeSession = sessionId;
   try {
     advanceInFlight = true;
-    const body = await api("/api/advance", { session: activeSession });
+    const body = await api("/api/advance", { session: activeSession, decision_timeout: decisionTimeout });
     if (version !== stateVersion || activeSession !== sessionId) return;
     data = body;
     render();
@@ -199,6 +201,8 @@ function renderModeControls() {
   whiteSeatBtn.setAttribute("aria-pressed", String(humanSeat === 1));
   botSelect.value = botId;
   botSelect.disabled = mode !== "human-bot";
+  decisionTimeoutSelect.value = String(decisionTimeout);
+  decisionTimeoutSelect.disabled = mode !== "human-bot";
   orientationSelect.value = orientation;
 }
 
@@ -293,6 +297,11 @@ function setBot(nextBot) {
   if (mode === "human-bot") newGame();
 }
 
+function setDecisionTimeout(nextTimeout) {
+  decisionTimeout = Number(nextTimeout) || 1;
+  renderModeControls();
+}
+
 function setOrientation(nextOrientation) {
   orientation = nextOrientation;
   renderModeControls();
@@ -317,6 +326,7 @@ humanBotBtn.addEventListener("click", () => setMode("human-bot"));
 blackSeatBtn.addEventListener("click", () => setHumanSeat(0));
 whiteSeatBtn.addEventListener("click", () => setHumanSeat(1));
 botSelect.addEventListener("change", (event) => setBot(event.target.value));
+decisionTimeoutSelect.addEventListener("change", (event) => setDecisionTimeout(event.target.value));
 orientationSelect.addEventListener("change", (event) => setOrientation(event.target.value));
 newGameBtn.addEventListener("click", newGame);
 flipBtn.addEventListener("click", () => setOrientation(orientation === "black" ? "white" : "black"));

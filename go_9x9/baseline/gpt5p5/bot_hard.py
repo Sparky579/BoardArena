@@ -23,6 +23,7 @@ FILES = "abcdefghi"
 SYMBOLS = ("B", "W")
 KOMI = 6.5
 TIME_LIMIT_SECONDS = 1.82
+SAFETY_MARGIN_SECONDS = 0.15
 ROLLOUT_LIMIT = 180
 EXPLORATION = 0.95
 ROOT_CANDIDATES = 30
@@ -113,7 +114,7 @@ def choose_action(state):
     pass_count = state.get("pass_count", 0)
     last_move = state.get("last_move")
     legal_set = set(legal_moves)
-    deadline = time.perf_counter() + TIME_LIMIT_SECONDS
+    deadline = time.perf_counter() + _time_budget(state)
 
     urgent = _urgent_action(board, player, None, legal_set)
     if urgent is not None:
@@ -962,6 +963,13 @@ def _parse_board(rows):
         for col, value in enumerate(row_text):
             values[row * BOARD_SIZE + col] = value
     return "".join(values)
+
+
+def _time_budget(state):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return TIME_LIMIT_SECONDS
 
 
 def _seed_from_state(board, player, plies):

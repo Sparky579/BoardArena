@@ -91,7 +91,7 @@ class GameState:
     walls: set[tuple[str, int, int]] = field(default_factory=set)
     blocked_edges: set[tuple[str, int, int]] = field(default_factory=set)
 
-    def bot_state(self, player_id: int) -> dict[str, Any]:
+    def bot_state(self, player_id: int, decision_timeout: float | None = None) -> dict[str, Any]:
         return {
             "player_id": player_id,
             "num_players": SUPPORTED_PLAYERS,
@@ -107,6 +107,8 @@ class GameState:
                 for direction, row, col in sorted(self.walls)
             ],
             "turn": self.turn,
+            "decision_timeout": decision_timeout,
+            "time_limit": decision_timeout,
         }
 
     def legal_actions(self, player_id: int) -> list[str]:
@@ -394,6 +396,11 @@ def choose_action_with_timeout(
     state: dict[str, Any],
     decision_timeout: float | None,
 ) -> Any:
+    state = dict(state)
+    if state.get("decision_timeout") is None:
+        state["decision_timeout"] = decision_timeout
+    if state.get("time_limit") is None:
+        state["time_limit"] = state.get("decision_timeout")
     if decision_timeout is None:
         return bot.choose_action(state)
 
@@ -480,6 +487,7 @@ def _run_match(
     developer_seat: int | None = None,
     bot_indices_by_seat: list[int] | None = None,
     bot_paths: list[str] | None = None,
+    perceived_timeout: float | None = None,
 ) -> dict[str, Any]:
     if len(bots) != SUPPORTED_PLAYERS:
         raise ValueError("lqq matches require exactly 2 bots")
@@ -495,10 +503,13 @@ def _run_match(
     state = GameState(rng=rng)
     status = "ok"
     error: str | None = None
+    
+    # Use perceived_timeout for bot_state if provided, else fall back to decision_timeout
+    p_timeout = perceived_timeout if perceived_timeout is not None else decision_timeout
 
     for _ in range(turn_limit):
         actor = state.current
-        bot_state = state.bot_state(actor)
+        bot_state = state.bot_state(actor, decision_timeout=p_timeout)
         legal_actions = bot_state["legal_actions"]
 
         if not legal_actions:
@@ -667,6 +678,7 @@ def battle_bots_once(
     keep_log: bool = True,
     turn_limit: int = DEFAULT_TURN_LIMIT,
     decision_timeout: float | None = None,
+    perceived_timeout: float | None = None,
 ) -> dict[str, Any]:
     """Run one game between two bot files.
 
@@ -690,6 +702,7 @@ def battle_bots_once(
         decision_timeout=decision_timeout,
         bot_indices_by_seat=bot_indices_by_seat,
         bot_paths=bot_paths,
+        perceived_timeout=perceived_timeout,
     )
 
 

@@ -14,6 +14,7 @@ WIN_SCORE = 1_000_000
 # Keep a real margin under a 1s referee timeout.  The environment runs the bot
 # in a worker thread, so returning at ~0.84s leaves room for scheduling jitter.
 TIME_BUDGET = 0.62
+SAFETY_MARGIN_SECONDS = 0.15
 EXPLORATION = 1.15
 ROLLOUT_PLIES = 5
 
@@ -36,6 +37,13 @@ CARDINALS = (
 )
 
 MOVE_NAMES = tuple(MOVE_DELTAS)
+
+
+def _time_budget(state, fallback):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return fallback
 
 
 class TimeUp(Exception):
@@ -99,7 +107,7 @@ class Bot:
         if len(legal) == 1:
             return legal[0]
 
-        self.deadline = time.perf_counter() + TIME_BUDGET
+        self.deadline = time.perf_counter() + _time_budget(state, TIME_BUDGET)
         self.me = int(state.get("player_id", state.get("actor", 0)))
         self._eval_cache.clear()
         if len(self._path_cache) > 50000:

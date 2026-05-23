@@ -7,6 +7,7 @@ import time
 BOARD_SIZE = 9
 INF = 10**9
 SAFETY_SECONDS = 0.30
+SAFETY_MARGIN_SECONDS = 0.15
 
 MOVE_DELTAS = {
     "MOVE_UP": (-1, 0),
@@ -420,7 +421,7 @@ class Bot:
         if quick is not None:
             return quick
 
-        self.deadline = time.perf_counter() + SAFETY_SECONDS
+        self.deadline = time.perf_counter() + _time_budget(state, SAFETY_SECONDS)
         root = MiniState.from_bot_state(state)
         me = root.current
 
@@ -634,3 +635,10 @@ class Bot:
             if action.startswith("MOVE_"):
                 return action
         return legal[0]
+
+
+def _time_budget(state, fallback):
+    timeout = state.get("decision_timeout") or state.get("time_limit")
+    if timeout:
+        return max(0.05, float(timeout) - SAFETY_MARGIN_SECONDS)
+    return fallback
