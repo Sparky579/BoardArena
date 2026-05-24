@@ -1,0 +1,91 @@
+{
+  "standings": {
+    "gemini_v2": {
+      "wins": 1,
+      "losses": 7,
+      "draws": 0
+    },
+    "gemini_v13": {
+      "wins": 2,
+      "losses": 6,
+      "draws": 0
+    },
+    "claude_hard": {
+      "wins": 7,
+      "losses": 1,
+      "draws": 0
+    },
+    "bot_v3": {
+      "wins": 7,
+      "losses": 1,
+      "draws": 0
+    },
+    "bot_mcts": {
+      "wins": 3,
+      "losses": 5,
+      "draws": 0
+    }
+  },
+  "matchups": [
+    {
+      "matchup": "gemini_v2 vs gemini_v13",
+      "gemini_v2": 1,
+      "gemini_v13": 1,
+      "draws": 0
+    },
+    {
+      "matchup": "gemini_v2 vs claude_hard",
+      "gemini_v2": 0,
+      "claude_hard": 2,
+      "draws": 0
+    },
+    {
+      "matchup": "gemini_v2 vs bot_v3",
+      "gemini_v2": 0,
+      "bot_v3": 2,
+      "draws": 0
+    },
+    {
+      "matchup": "gemini_v2 vs bot_mcts",
+      "gemini_v2": 0,
+      "bot_mcts": 2,
+      "draws": 0
+    },
+    {
+      "matchup": "gemini_v13 vs claude_hard",
+      "gemini_v13": 0,
+      "claude_hard": 2,
+      "draws": 0
+    },
+    {
+      "matchup": "gemini_v13 vs bot_v3",
+      "gemini_v13": 0,
+      "bot_v3": 2,
+      "draws": 0
+    },
+    {
+      "matchup": "gemini_v13 vs bot_mcts",
+      "gemini_v13": 1,
+      "bot_mcts": 1,
+      "draws": 0
+    },
+    {
+      "matchup": "claude_hard vs bot_v3",
+      "claude_hard": 1,
+      "bot_v3": 1,
+      "draws": 0
+    },
+    {
+      "matchup": "claude_hard vs bot_mcts",
+      "claude_hard": 2,
+      "bot_mcts": 0,
+      "draws": 0
+    },
+    {
+      "matchup": "bot_v3 vs bot_mcts",
+      "bot_v3": 2,
+      "bot_mcts": 0,
+      "draws": 0
+    }
+  ]
+}
