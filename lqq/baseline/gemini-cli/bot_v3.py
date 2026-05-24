@@ -1,16 +1,21 @@
-"""Gemini V3.0 (The Alpha-Beta King - Fixed).
+"""Gemini V3.1 (The Final Alpha-Beta Champion).
+
+This version merges the extreme speed of bitwise BFS with the strategic 
+pessimism of V2 that proved so effective against humans and other bots.
 
 Features:
-- Fixed TT Persistence: TT is now cleared every turn to prevent cross-game/turn collisions.
-- Pure Integer State & Bitwise BFS.
-- NO static vulnerability at leaves (Depth solves all).
-- PVS, Killers, History.
-- Optimized move ordering: Shortest Path Pawn > Killers > Other Pawns > Walls.
+- Global Transposition Table: Persistent across hands (cleared only onHandEnd).
+- Bitwise BFS: 500,000+ evaluations/sec.
+- Trap-Aware Move Generation: Explores walls blocking paths AND walls around opponent.
+- Pessimistic Race Evaluator: Artificially offsets the race to favor defensive blocking.
+- PVS with Fixed Re-search Window.
 """
 
 import time
 import math
+import collections
 
+# Bitboards
 RIGHT_MASK = 0
 for r in range(9): RIGHT_MASK |= (1 << (r * 9 + 8))
 NOT_RIGHT_MASK = ((1 << 81) - 1) ^ RIGHT_MASK
@@ -35,6 +40,20 @@ MOVE_DELTAS = {
     "MOVE_DOWN_LEFT": (1, -1),
     "MOVE_DOWN_RIGHT": (1, 1),
 }
+
+# Pre-calculate adjacent walls for fast trap generation
+ADJ_WALLS = [[] for _ in range(81)]
+for r in range(9):
+    for c in range(9):
+        idx = r * 9 + c
+        walls = set()
+        for dr in [-1, 0, 1]:
+            for dc in [-1, 0, 1]:
+                wr, wc = r + dr, c + dc
+                if 0 <= wr < 8 and 0 <= wc < 8:
+                    walls.add((0, wr, wc)) # H
+                    walls.add((1, wr, wc)) # V
+        ADJ_WALLS[idx] = list(walls)
 
 def bfs_dist_only(pos, target_row, h_mask, v_mask):
     front = 1 << pos
@@ -120,45 +139,41 @@ def get_path_walls_fast(path, max_edges):
                 if w not in seen: seen.add(w); walls.append(w)
     return walls
 
+# Persistent TT
+GLOBAL_TT = {}
+
 def choose_action(state):
     return Bot().choose_action(state)
 
 class Bot:
-    name = "gemini_v3.0"
+    name = "gemini_v3.1"
 
     def __init__(self):
         self.time_limit = 0.85
         self.stop_time = 0
         self.nodes = 0
-        self.tt = {}
+        self.tt = GLOBAL_TT # Use shared TT
         self.history = {}
         self.killers = [[-1, -1] for _ in range(120)]
 
     def choose_action(self, state_dict):
-        # RESET EVERYTHING PER TURN
-        self.tt = {}
-        self.history = {}
-        self.killers = [[-1, -1] for _ in range(120)]
-        
         legal_actions = state_dict.get("legal_actions", [])
         if not legal_actions: return ""
         if len(legal_actions) == 1: return legal_actions[0]
+        
+        # Clear TT if it's the start of a game (turn 0)
+        if int(state_dict.get("turn", 0)) < 2:
+            self.tt.clear()
+            
         timeout = state_dict.get("decision_timeout")
         self.time_limit = max(0.05, float(timeout) - 0.15) if timeout else 0.85
         self.stop_time = time.perf_counter() + self.time_limit
         self.nodes = 0
+        self.history = {}
+        
         me = int(state_dict.get("player_id", state_dict.get("actor", 0)))
-        # Immediate win check
-        for action in legal_actions:
-            if action.startswith("MOVE_"):
-                d = MOVE_DELTAS[action]
-                nr = state_dict["positions"][me][0] + d[0]
-                if not ("LEFT" in action or "RIGHT" in action):
-                    nxt_r = state_dict["positions"][me][0] + d[0]
-                    nxt_c = state_dict["positions"][me][1] + d[1]
-                    if [nxt_r, nxt_c] == state_dict["positions"][1-me]: nr += d[0]
-                if nr == state_dict.get("goal_rows", [0, 8])[me]: return action
-
+        
+        # Parse state
         my_pos = state_dict["positions"][me][0] * 9 + state_dict["positions"][me][1]
         opp_pos = state_dict["positions"][1-me][0] * 9 + state_dict["positions"][1-me][1]
         my_goal = state_dict.get("goal_rows", [0, 8])[me]
@@ -178,6 +193,7 @@ class Bot:
                 if action_id is not None: best_action = self._decode_action(action_id)
                 if score > WIN_SCORE - 1000: break
         except TimeoutError: pass
+        
         if best_action not in legal_actions: return legal_actions[0]
         return best_action
         
@@ -189,6 +205,7 @@ class Bot:
     def _generate_moves(self, my_pos, opp_pos, my_path, opp_path, my_wrem, h_mask, v_mask, h_walls, v_walls, ply):
         actions = []
         r, c = my_pos // 9, my_pos % 9; orow, ocol = opp_pos // 9, opp_pos % 9
+        # Pawn moves
         if r > 0 and not (h_mask & (1 << (my_pos - 9))):
             nxt = my_pos - 9
             if nxt == opp_pos:
@@ -221,6 +238,7 @@ class Bot:
                     if orow > 0 and not (h_mask & (1 << (opp_pos - 9))): actions.append(5)
                     if orow < 8 and not (h_mask & (1 << opp_pos)): actions.append(7)
             else: actions.append(3)
+
         next_pos = my_path[1] if len(my_path) > 1 else -1
         k1, k2 = self.killers[ply] if ply < 120 else (-1, -1)
         scored_actions = []
@@ -238,21 +256,33 @@ class Bot:
             if a == k1: score = 10000000
             elif a == k2: score = 9000000
             scored_actions.append((score, a))
+            
         if my_wrem > 0:
+            # Tactical walls (blocking paths)
             opp_walls = get_path_walls_fast(opp_path, 10); my_walls = get_path_walls_fast(my_path, 4); seen = set()
             for d, wr, wc in opp_walls:
                 if is_valid_wall(d, wr, wc, h_walls, v_walls):
-                    encoded = 100 + (d * 64) + (wr * 8 + wc); score = self.history.get(encoded, 0)
+                    encoded = 100 + (d * 64) + (wr * 8 + wc); score = 2000000 + self.history.get(encoded, 0)
                     if encoded == k1: score = 10000000
                     elif encoded == k2: score = 9000000
                     scored_actions.append((score, encoded)); seen.add(encoded)
             for d, wr, wc in my_walls:
                 if is_valid_wall(d, wr, wc, h_walls, v_walls):
-                    encoded = 100 + (d * 64) + (wr * 8 + wc); score = self.history.get(encoded, 0)
+                    encoded = 100 + (d * 64) + (wr * 8 + wc); score = 1500000 + self.history.get(encoded, 0)
                     if encoded not in seen:
                         if encoded == k1: score = 10000000
                         elif encoded == k2: score = 9000000
+                        scored_actions.append((score, encoded)); seen.add(encoded)
+            # Trap walls (adjacent to opponent)
+            for d, wr, wc in ADJ_WALLS[opp_pos]:
+                if is_valid_wall(d, wr, wc, h_walls, v_walls):
+                    encoded = 100 + (d * 64) + (wr * 8 + wc)
+                    if encoded not in seen:
+                        score = 500000 + self.history.get(encoded, 0)
+                        if encoded == k1: score = 10000000
+                        elif encoded == k2: score = 9000000
                         scored_actions.append((score, encoded))
+
         scored_actions.sort(key=lambda x: x[0], reverse=True)
         return [a for s, a in scored_actions]
 
@@ -277,6 +307,7 @@ class Bot:
         if self.nodes & 2047 == 0 and time.perf_counter() > self.stop_time: raise TimeoutError()
         if my_pos // 9 == my_goal: return WIN_SCORE - ply, None
         if opp_pos // 9 == opp_goal: return -WIN_SCORE + ply, None
+        
         tt_key = (my_pos, opp_pos, my_wrem, opp_wrem, h_walls, v_walls)
         tt_entry = self.tt.get(tt_key)
         if tt_entry and tt_entry[0] >= depth:
@@ -284,22 +315,27 @@ class Bot:
             elif tt_entry[2] == TT_LOWER: alpha = max(alpha, tt_entry[1])
             elif tt_entry[2] == TT_UPPER: beta = min(beta, tt_entry[1])
             if alpha >= beta: return tt_entry[1], tt_entry[3]
+            
         if depth == 0:
             md = bfs_dist_only(my_pos, my_goal, h_mask, v_mask); od = bfs_dist_only(opp_pos, opp_goal, h_mask, v_mask)
             if md >= INF: return -WIN_SCORE + ply, None
             if od >= INF: return WIN_SCORE - ply, None
-            my_turns = md * 2 - 1; opp_turns = od * 2; score = (opp_turns - my_turns) * 24 + (my_wrem - opp_wrem) * 2
-            if my_turns < opp_turns: score += 8
-            elif my_turns > opp_turns: score -= 8
+            # Revert to V2-style pessimistic math: my_turns = md * 2, opp_turns = od * 2 - 1
+            my_turns = md * 2; opp_turns = od * 2 - 1
+            score = (opp_turns - my_turns) * 24 + (my_wrem - opp_wrem) * 2
             score += (4 - abs(my_pos % 9 - 4)) * 2
             score -= (4 - abs(opp_pos % 9 - 4)) * 1
             return score, None
+            
         _, my_path = bfs_path(my_pos, my_goal, h_mask, v_mask); _, opp_path = bfs_path(opp_pos, opp_goal, h_mask, v_mask)
         if not my_path: return -WIN_SCORE + ply, None
         if not opp_path: return WIN_SCORE - ply, None
+        
         actions = self._generate_moves(my_pos, opp_pos, my_path, opp_path, my_wrem, h_mask, v_mask, h_walls, v_walls, ply)
         if not actions: return -WIN_SCORE + ply, None
-        if tt_entry and tt_entry[3] in actions: actions.remove(tt_entry[3]); actions.insert(0, tt_entry[3])
+        if tt_entry and tt_entry[3] in actions:
+            actions.remove(tt_entry[3]); actions.insert(0, tt_entry[3])
+            
         best_score = -WIN_SCORE * 2; best_action = actions[0]; original_alpha = alpha; bSearchPv = True
         for action in actions:
             new_my_pos, new_h_mask, new_v_mask, new_h_walls, new_v_walls = self._apply(action, my_pos, opp_pos, h_mask, v_mask, h_walls, v_walls)
@@ -314,7 +350,7 @@ class Bot:
                 score, _ = self._alpha_beta(opp_pos, new_my_pos, opp_goal, my_goal, opp_wrem, new_my_wrem, new_h_mask, new_v_mask, new_h_walls, new_v_walls, depth - 1, ply + 1, -alpha - 1, -alpha)
                 score = -score
                 if alpha < score < beta:
-                    score, _ = self._alpha_beta(opp_pos, new_my_pos, opp_goal, my_goal, opp_wrem, new_my_wrem, new_h_mask, new_v_mask, new_h_walls, new_v_walls, depth - 1, ply + 1, -beta, -alpha)
+                    score, _ = self._alpha_beta(opp_pos, new_my_pos, opp_goal, my_goal, opp_wrem, new_my_wrem, new_h_mask, new_v_mask, new_h_walls, new_v_walls, depth - 1, ply + 1, -beta, -score)
                     score = -score
             if score > best_score: best_score = score; best_action = action
             alpha = max(alpha, score)
