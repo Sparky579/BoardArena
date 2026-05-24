@@ -171,7 +171,13 @@ class GameSession:
                 "human_turn": human_turn,
                 "bot_turn": bot_turn,
                 "status_text": self.status_text(state),
-                "log": self.log[-120:],
+                # Was self.log[-120:] which silently dropped older entries
+                # in any game past ~60 full moves, making the UI move-log
+                # look like a sliding window. Send the whole log; chess
+                # tops out around 5896 plies in the absolute worst case,
+                # but practical games are well under 600 entries so the
+                # payload stays cheap.
+                "log": self.log,
             }
         )
         return state

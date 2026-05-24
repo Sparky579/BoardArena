@@ -164,7 +164,11 @@ class GameSession:
                     "human_turn": human_turn,
                     "bot_turn": bot_turn,
                     "status_text": self.status_text(state, bot_turn),
-                    "log": self.log[-100:],
+                    # Was self.log[-100:] which silently dropped older
+                    # entries in long games, making the UI move-log look
+                    # like a sliding window. Lqq tops out at 400 turns,
+                    # so sending the full log is cheap.
+                    "log": self.log,
                 }
             )
             return state
