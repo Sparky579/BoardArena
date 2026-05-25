@@ -166,7 +166,7 @@ class Bot:
             self.tt.clear()
             
         timeout = state_dict.get("decision_timeout")
-        self.time_limit = max(0.05, float(timeout) - 0.15) if timeout else 0.85
+        self.time_limit = max(0.05, float(timeout) - 0.25) if timeout else 0.85
         self.stop_time = time.perf_counter() + self.time_limit
         self.nodes = 0
         self.history = {}

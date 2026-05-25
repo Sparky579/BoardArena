@@ -390,18 +390,21 @@ class MCTS:
     def search(self, state):
         current_hash = (state.actor, state.pos[0], state.pos[1], state.walls_rem[0], state.walls_rem[1], state.h_walls, state.v_walls)
         
-        # Advance tree
         if self.root is not None:
             found = False
-            q = [self.root]
-            while q:
-                node = q.pop(0)
-                if (node.state.actor, node.state.pos[0], node.state.pos[1], node.state.walls_rem[0], node.state.walls_rem[1], node.state.h_walls, node.state.v_walls) == current_hash:
-                    self.root = node
-                    self.root.parent = None
-                    found = True
+            level = [self.root]
+            for _ in range(3):
+                next_level = []
+                for node in level:
+                    if (node.state.actor, node.state.pos[0], node.state.pos[1], node.state.walls_rem[0], node.state.walls_rem[1], node.state.h_walls, node.state.v_walls) == current_hash:
+                        self.root = node
+                        self.root.parent = None
+                        found = True
+                        break
+                    next_level.extend(node.children)
+                if found:
                     break
-                q.extend(node.children)
+                level = next_level
             if not found:
                 self.root = Node(state, None, None, 1.0)
         else:
@@ -462,17 +465,17 @@ class Bot:
         self.mcts = MCTS(0.85)
 
     def choose_action(self, state_dict):
+        PATH_CACHE.clear()
+        VULN_CACHE.clear()
         legal_actions = state_dict.get("legal_actions", [])
         if not legal_actions:
             return ""
         if len(legal_actions) == 1:
             return legal_actions[0]
-            
-        # Dynamically adjust time limit based on provided decision_timeout
-        # Default to 0.85 if not provided. Leave 0.15s for referee/thread overhead.
+             
         referee_timeout = state_dict.get("decision_timeout")
         if referee_timeout:
-            self.mcts.time_limit = max(0.05, float(referee_timeout) - 0.15)
+            self.mcts.time_limit = max(0.05, float(referee_timeout) - 0.25)
         else:
             self.mcts.time_limit = 0.85
             

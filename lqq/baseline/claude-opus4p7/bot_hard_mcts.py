@@ -503,21 +503,18 @@ class Bot:
     _BUDGET_SAFE = 0.78
 
     def __init__(self):
-        self.budget = self._BUDGET_AGGRESSIVE
-        # last_completed=True so the very first move doesn't pre-drop.
         self._last_completed = True
-        self.mcts = MCTS(self.budget)
+        self.mcts = MCTS(0.85)
+
+    def _time_budget(self, state_dict):
+        timeout = state_dict.get("decision_timeout") or state_dict.get("time_limit")
+        if timeout:
+            return max(0.05, float(timeout) - 0.25)
+        return 0.78
 
     def choose_action(self, state_dict):
-        # If the previous choose_action never reached its `finally` clause
-        # by the time this call started, the env killed it via
-        # decision_timeout. Fall back to the safe budget for the rest of
-        # this Bot's lifetime. (Reducing self.mcts.time_limit also speeds
-        # up the orphan thread's exit on its next time check, since
-        # MCTS.search re-reads time_limit each iteration.)
-        if not self._last_completed and self.budget > self._BUDGET_SAFE:
-            self.budget = self._BUDGET_SAFE
-            self.mcts.time_limit = self.budget
+        if not self._last_completed:
+            self.mcts.time_limit = self._BUDGET_SAFE
         self._last_completed = False
         try:
             return self._choose_action_inner(state_dict)
@@ -525,6 +522,9 @@ class Bot:
             self._last_completed = True
 
     def _choose_action_inner(self, state_dict):
+        PATH_CACHE.clear()
+        VULN_CACHE.clear()
+        self.mcts.time_limit = self._time_budget(state_dict)
         legal_actions = state_dict.get("legal_actions", [])
         if not legal_actions:
             return ""

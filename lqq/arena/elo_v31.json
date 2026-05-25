@@ -1,0 +1,375 @@
+{
+  "mode": "double-round-robin",
+  "rounds": 1,
+  "decision_timeout": 1.5,
+  "turn_limit": 400,
+  "seed": 20260520,
+  "initial_elo": 1500.0,
+  "k_factor": 32.0,
+  "workers": 4,
+  "total_games": 30,
+  "rankings": [
+    {
+      "rank": 1,
+      "bot": "gemini-cli/bot_v2.1",
+      "bot_name": "gemini_MCTS_v2.1",
+      "elo": 1550.0,
+      "games": 10,
+      "wins": 7,
+      "losses": 3,
+      "draws": 0
+    },
+    {
+      "rank": 2,
+      "bot": "gpt-hard/bot",
+      "bot_name": "gpt_hard",
+      "elo": 1528.0,
+      "games": 10,
+      "wins": 6,
+      "losses": 4,
+      "draws": 0
+    },
+    {
+      "rank": 3,
+      "bot": "claude-opus4p7/bot_hard_mcts",
+      "bot_name": "claude_opus4p7_hard_mcts",
+      "elo": 1522.8,
+      "games": 10,
+      "wins": 6,
+      "losses": 4,
+      "draws": 0
+    },
+    {
+      "rank": 4,
+      "bot": "claude-new/bot_v2",
+      "bot_name": "bot_v2",
+      "elo": 1508.9,
+      "games": 10,
+      "wins": 5,
+      "losses": 5,
+      "draws": 0
+    },
+    {
+      "rank": 5,
+      "bot": "gemini-cli/bot_v2",
+      "bot_name": "gemini_MCTS",
+      "elo": 1471.6,
+      "games": 10,
+      "wins": 4,
+      "losses": 6,
+      "draws": 0
+    },
+    {
+      "rank": 6,
+      "bot": "gemini-cli/bot_v3",
+      "bot_name": "gemini_v3.1",
+      "elo": 1418.8,
+      "games": 10,
+      "wins": 2,
+      "losses": 8,
+      "draws": 0
+    }
+  ],
+  "matches": [
+    {
+      "bot_a": "gemini-cli/bot_v2.1",
+      "bot_b": "gemini-cli/bot_v3",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "gemini-cli/bot_v2.1",
+      "status": "ok",
+      "turns": 53,
+      "seed": 20260520
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2.1",
+      "bot_b": "gemini-cli/bot_v3",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "gemini-cli/bot_v2.1",
+      "status": "ok",
+      "turns": 76,
+      "seed": 20260521
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2.1",
+      "bot_b": "gemini-cli/bot_v2",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "gemini-cli/bot_v2",
+      "status": "ok",
+      "turns": 78,
+      "seed": 20260522
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2.1",
+      "bot_b": "gemini-cli/bot_v2",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "gemini-cli/bot_v2.1",
+      "status": "ok",
+      "turns": 94,
+      "seed": 20260523
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2.1",
+      "bot_b": "gpt-hard/bot",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "gpt-hard/bot",
+      "status": "ok",
+      "turns": 76,
+      "seed": 20260524
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2.1",
+      "bot_b": "gpt-hard/bot",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "gemini-cli/bot_v2.1",
+      "status": "ok",
+      "turns": 88,
+      "seed": 20260525
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2.1",
+      "bot_b": "claude-new/bot_v2",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "gemini-cli/bot_v2.1",
+      "status": "ok",
+      "turns": 85,
+      "seed": 20260526
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2.1",
+      "bot_b": "claude-new/bot_v2",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "gemini-cli/bot_v2.1",
+      "status": "ok",
+      "turns": 74,
+      "seed": 20260527
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2.1",
+      "bot_b": "claude-opus4p7/bot_hard_mcts",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "gemini-cli/bot_v2.1",
+      "status": "timeout",
+      "turns": 28,
+      "seed": 20260529
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2.1",
+      "bot_b": "claude-opus4p7/bot_hard_mcts",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "claude-opus4p7/bot_hard_mcts",
+      "status": "ok",
+      "turns": 68,
+      "seed": 20260528
+    },
+    {
+      "bot_a": "gemini-cli/bot_v3",
+      "bot_b": "gpt-hard/bot",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "gemini-cli/bot_v3",
+      "status": "ok",
+      "turns": 67,
+      "seed": 20260532
+    },
+    {
+      "bot_a": "gemini-cli/bot_v3",
+      "bot_b": "gemini-cli/bot_v2",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "gemini-cli/bot_v2",
+      "status": "ok",
+      "turns": 86,
+      "seed": 20260530
+    },
+    {
+      "bot_a": "gemini-cli/bot_v3",
+      "bot_b": "gemini-cli/bot_v2",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "gemini-cli/bot_v2",
+      "status": "ok",
+      "turns": 67,
+      "seed": 20260531
+    },
+    {
+      "bot_a": "gemini-cli/bot_v3",
+      "bot_b": "gpt-hard/bot",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "gpt-hard/bot",
+      "status": "ok",
+      "turns": 77,
+      "seed": 20260533
+    },
+    {
+      "bot_a": "gemini-cli/bot_v3",
+      "bot_b": "claude-new/bot_v2",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "gemini-cli/bot_v3",
+      "status": "ok",
+      "turns": 68,
+      "seed": 20260535
+    },
+    {
+      "bot_a": "gemini-cli/bot_v3",
+      "bot_b": "claude-new/bot_v2",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "claude-new/bot_v2",
+      "status": "ok",
+      "turns": 68,
+      "seed": 20260534
+    },
+    {
+      "bot_a": "gemini-cli/bot_v3",
+      "bot_b": "claude-opus4p7/bot_hard_mcts",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "claude-opus4p7/bot_hard_mcts",
+      "status": "ok",
+      "turns": 81,
+      "seed": 20260537
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2",
+      "bot_b": "claude-new/bot_v2",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "claude-new/bot_v2",
+      "status": "timeout",
+      "turns": 2,
+      "seed": 20260540
+    },
+    {
+      "bot_a": "gemini-cli/bot_v3",
+      "bot_b": "claude-opus4p7/bot_hard_mcts",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "claude-opus4p7/bot_hard_mcts",
+      "status": "ok",
+      "turns": 86,
+      "seed": 20260536
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2",
+      "bot_b": "gpt-hard/bot",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "gpt-hard/bot",
+      "status": "timeout",
+      "turns": 54,
+      "seed": 20260538
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2",
+      "bot_b": "claude-opus4p7/bot_hard_mcts",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "claude-opus4p7/bot_hard_mcts",
+      "status": "timeout",
+      "turns": 20,
+      "seed": 20260542
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2",
+      "bot_b": "claude-opus4p7/bot_hard_mcts",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "claude-opus4p7/bot_hard_mcts",
+      "status": "timeout",
+      "turns": 19,
+      "seed": 20260543
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2",
+      "bot_b": "gpt-hard/bot",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "gpt-hard/bot",
+      "status": "ok",
+      "turns": 77,
+      "seed": 20260539
+    },
+    {
+      "bot_a": "gemini-cli/bot_v2",
+      "bot_b": "claude-new/bot_v2",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "gemini-cli/bot_v2",
+      "status": "ok",
+      "turns": 66,
+      "seed": 20260541
+    },
+    {
+      "bot_a": "gpt-hard/bot",
+      "bot_b": "claude-new/bot_v2",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "claude-new/bot_v2",
+      "status": "ok",
+      "turns": 72,
+      "seed": 20260544
+    },
+    {
+      "bot_a": "gpt-hard/bot",
+      "bot_b": "claude-new/bot_v2",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "claude-new/bot_v2",
+      "status": "ok",
+      "turns": 45,
+      "seed": 20260545
+    },
+    {
+      "bot_a": "claude-new/bot_v2",
+      "bot_b": "claude-opus4p7/bot_hard_mcts",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "claude-new/bot_v2",
+      "status": "timeout",
+      "turns": 12,
+      "seed": 20260549
+    },
+    {
+      "bot_a": "gpt-hard/bot",
+      "bot_b": "claude-opus4p7/bot_hard_mcts",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "gpt-hard/bot",
+      "status": "ok",
+      "turns": 87,
+      "seed": 20260546
+    },
+    {
+      "bot_a": "gpt-hard/bot",
+      "bot_b": "claude-opus4p7/bot_hard_mcts",
+      "bot_a_seat": 1,
+      "bot_b_seat": 0,
+      "winner": "gpt-hard/bot",
+      "status": "timeout",
+      "turns": 50,
+      "seed": 20260547
+    },
+    {
+      "bot_a": "claude-new/bot_v2",
+      "bot_b": "claude-opus4p7/bot_hard_mcts",
+      "bot_a_seat": 0,
+      "bot_b_seat": 1,
+      "winner": "claude-opus4p7/bot_hard_mcts",
+      "status": "ok",
+      "turns": 78,
+      "seed": 20260548
+    }
+  ]
+}

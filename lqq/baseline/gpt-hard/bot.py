@@ -83,7 +83,7 @@ class Bot:
         # Dynamically adjust deadline based on referee decision_timeout
         referee_timeout = state.get("decision_timeout")
         if referee_timeout:
-            budget = max(0.05, float(referee_timeout) - 0.15)
+            budget = max(0.05, float(referee_timeout) - 0.25)
         else:
             budget = TIME_BUDGET
             

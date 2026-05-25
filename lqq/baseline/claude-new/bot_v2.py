@@ -853,7 +853,7 @@ class Bot:
         # Dynamically adjust time limit based on provided decision_timeout
         referee_timeout = state_dict.get("decision_timeout")
         if referee_timeout:
-            time_limit = max(0.05, float(referee_timeout) - 0.15)
+            time_limit = max(0.05, float(referee_timeout) - 0.25)
             soft_limit = max(0.05, time_limit - 0.25)
         else:
             time_limit = 0.72
