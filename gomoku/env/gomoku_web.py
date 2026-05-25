@@ -20,12 +20,35 @@ from gomoku_env import DEFAULT_MAX_PLIES, BotTimeoutError, GomokuEnv, SystemBot,
 
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_BOTS = {
-    "/deepseek_v4/bot_hard": HERE.parent / "baseline" / "deepseek_v4" / "bot_hard.py",
-    "/claude_opus4p7/bot_easy": HERE.parent / "baseline" / "claude_opus4p7" / "bot_easy.py",
-    "/claude_opus4p7/bot_hard": HERE.parent / "baseline" / "claude_opus4p7" / "bot_hard.py",
-}
+BASELINE_DIR = HERE.parent / "baseline"
 DEFAULT_BOT_ID = "/deepseek_v4/bot_hard"
+
+
+def bot_id_for_path(path: Path) -> str:
+    try:
+        relative = path.resolve().relative_to(BASELINE_DIR.resolve())
+        return f"/{relative.with_suffix('').as_posix()}"
+    except ValueError:
+        return f"/{path.stem}"
+
+
+def discover_bot_paths() -> dict[str, Path]:
+    """Walk ``baseline/`` for ``bot.py`` / ``bot_*.py`` and return a
+    deterministic ``{bot_id: path}`` mapping.
+    """
+    bot_paths: dict[str, Path] = {}
+    if not BASELINE_DIR.is_dir():
+        return bot_paths
+    for path in sorted(BASELINE_DIR.glob("*.py")):
+        if path.name.startswith("_"):
+            continue
+        bot_paths[bot_id_for_path(path)] = path
+    for pattern in ("bot.py", "bot_*.py"):
+        for path in sorted(BASELINE_DIR.rglob(pattern)):
+            if "__pycache__" in path.parts:
+                continue
+            bot_paths[bot_id_for_path(path)] = path
+    return bot_paths
 DEFAULT_DECISION_TIMEOUT = 1.0
 ALLOWED_DECISION_TIMEOUTS = {1.0, 3.0, 8.0}
 STATIC_TYPES = {
@@ -376,19 +399,30 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run the BoardArena Gomoku browser UI")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8050)
-    parser.add_argument("--bot", type=Path, default=None, help="optional path overriding the default hard bot")
-    parser.add_argument("--default-bot", choices=tuple(DEFAULT_BOTS), default=DEFAULT_BOT_ID)
+    parser.add_argument(
+        "--bot", type=Path, default=None,
+        help="optional extra bot path to mount under its discovered id",
+    )
+    parser.add_argument(
+        "--default-bot", default=DEFAULT_BOT_ID,
+        help="default bot id selected in the UI (must be a discovered id)",
+    )
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--max-plies", type=int, default=DEFAULT_MAX_PLIES)
     parser.add_argument("--no-open", action="store_true")
     args = parser.parse_args()
-    args.bot_paths = dict(DEFAULT_BOTS)
+    args.bot_paths = discover_bot_paths()
     if args.bot is not None:
-        args.bot_paths["/claude_opus4p7/bot_hard"] = args.bot
+        args.bot_paths[bot_id_for_path(args.bot)] = args.bot
+    if not args.bot_paths:
+        raise SystemExit(f"no bots discovered under {BASELINE_DIR}")
+    if args.default_bot not in args.bot_paths:
+        args.default_bot = next(iter(args.bot_paths))
 
     server, port = bind_server(args)
     url = f"http://{args.host}:{port}/"
     print(f"BoardArena gomoku UI: {url}")
+    print(f"Loaded {len(args.bot_paths)} bots; default: {args.default_bot}")
     if not args.no_open:
         threading.Timer(0.4, lambda: webbrowser.open(url)).start()
     server.serve_forever()

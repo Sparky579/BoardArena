@@ -20,11 +20,39 @@ from nimmt_env import MAX_PLAYERS, MIN_PLAYERS, BotTimeoutError, NimmtEnv, Syste
 
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_BOTS = {
-    "/baseline/bot_random": HERE.parent / "baseline" / "bot_random.py",
-    "/baseline/bot_greedy": HERE.parent / "baseline" / "bot_greedy.py",
-}
+GAME_ROOT = HERE.parent
+BASELINE_DIR = GAME_ROOT / "baseline"
 DEFAULT_BOT_ID = "/baseline/bot_greedy"
+
+
+def bot_id_for_path(path: Path) -> str:
+    """nimmt convention: ids relative to the game root, so top-level
+    bots in ``baseline/`` come out as ``/baseline/<stem>`` (matches the
+    pre-discovery hardcoded list)."""
+    try:
+        relative = path.resolve().relative_to(GAME_ROOT.resolve())
+        return f"/{relative.with_suffix('').as_posix()}"
+    except ValueError:
+        return f"/{path.stem}"
+
+
+def discover_bot_paths() -> dict[str, Path]:
+    """Walk ``baseline/`` for ``bot.py`` / ``bot_*.py`` and return a
+    deterministic ``{bot_id: path}`` mapping.
+    """
+    bot_paths: dict[str, Path] = {}
+    if not BASELINE_DIR.is_dir():
+        return bot_paths
+    for path in sorted(BASELINE_DIR.glob("*.py")):
+        if path.name.startswith("_"):
+            continue
+        bot_paths[bot_id_for_path(path)] = path
+    for pattern in ("bot.py", "bot_*.py"):
+        for path in sorted(BASELINE_DIR.rglob(pattern)):
+            if "__pycache__" in path.parts:
+                continue
+            bot_paths[bot_id_for_path(path)] = path
+    return bot_paths
 DEFAULT_DECISION_TIMEOUT = 1.0
 ALLOWED_DECISION_TIMEOUTS = {1.0, 3.0, 8.0}
 STATIC_TYPES = {
@@ -317,18 +345,29 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run the BoardArena nimmt browser UI")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8040)
-    parser.add_argument("--bot", type=Path, default=None, help="optional path overriding /baseline/bot_greedy")
-    parser.add_argument("--default-bot", choices=tuple(DEFAULT_BOTS), default=DEFAULT_BOT_ID)
+    parser.add_argument(
+        "--bot", type=Path, default=None,
+        help="optional extra bot path to mount under its discovered id",
+    )
+    parser.add_argument(
+        "--default-bot", default=DEFAULT_BOT_ID,
+        help="default bot id selected in the UI (must be a discovered id)",
+    )
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--no-open", action="store_true")
     args = parser.parse_args()
 
-    bot_paths = dict(DEFAULT_BOTS)
+    bot_paths = discover_bot_paths()
     if args.bot is not None:
-        bot_paths["/baseline/bot_greedy"] = args.bot
+        bot_paths[bot_id_for_path(args.bot)] = args.bot
+    if not bot_paths:
+        raise SystemExit(f"no bots discovered under {BASELINE_DIR}")
+    default_bot = args.default_bot if args.default_bot in bot_paths else next(iter(bot_paths))
+    args.default_bot = default_bot
     server, port = bind_server(args, bot_paths)
     url = f"http://{args.host}:{port}/"
     print(f"BoardArena nimmt UI: {url}")
+    print(f"Loaded {len(bot_paths)} bots; default: {default_bot}")
     if not args.no_open:
         threading.Timer(0.4, lambda: webbrowser.open(url)).start()
     server.serve_forever()
