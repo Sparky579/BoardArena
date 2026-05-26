@@ -29,6 +29,7 @@ Environment overrides:
 from __future__ import annotations
 
 import os
+import queue
 import re
 import shutil
 import subprocess
@@ -69,10 +70,19 @@ _ENGINE_LOCK = threading.Lock()
 class EdaxEngine:
     """Thin wrapper around an interactive Edax subprocess.
 
-    Edax has no clean machine-readable protocol; in default mode it
-    prints "Edax plays X" (or "Edax passes") on a line of its own after
-    ``go``, then a fresh board picture. We just send commands and read
-    stdout until that announcement line shows up.
+    Edax runs in CC (computer-vs-computer) mode by default and
+    auto-plays both sides after each ``go``.  We use a background
+    reader thread that drains stdout into a Queue so that every
+    ``_read_until`` call has a real per-read timeout — ``readline()``
+    alone blocks indefinitely.
+
+    Protocol per move:
+      1. Send ``setboard <pos> <side>``, ``level <n>``,
+         ``move-time 0:00:<t>``, ``go``.
+      2. Read the *first* ``Edax plays X`` line — that is the move we
+         asked for.
+      3. Drain the *second* ``Edax plays X`` that the CC auto-play
+         produces, so the queue is clean for the next call.
     """
 
     _PLAY_RE = re.compile(r"Edax plays\s+([A-Ha-h][1-8])", re.IGNORECASE)
@@ -86,8 +96,6 @@ class EdaxEngine:
                 f"Edax data/eval.dat not found under {cwd}. Place the "
                 "eval weights there, or set EDAX_DATA_DIR."
             )
-        # ``bufsize=1`` + line-buffered text mode so we can read replies
-        # promptly. Edax inherits cwd so it can find data/eval.dat.
         self.proc = subprocess.Popen(
             [binary],
             cwd=str(cwd),
@@ -98,34 +106,71 @@ class EdaxEngine:
             bufsize=1,
         )
         self._lock = threading.Lock()
-        # Initialize: quieten output, disable book so wrappers are
-        # deterministic, default to mode=0 (no auto play).
-        self._send("verbose 0")
-        self._send("book-usage off")
-        self._send("mode 0")
-        self._send("auto-start off")
+        # Background reader thread — continuously drains stdout into queue.
+        self._q: queue.Queue[str] = queue.Queue()
+        self._reader = threading.Thread(target=self._reader_loop, daemon=True)
+        self._reader.start()
+        # Give Edax a moment to finish its startup banner, then discard it.
+        time.sleep(0.5)
+        self._drain_queue()
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _reader_loop(self) -> None:
+        """Daemon thread: push every stdout line into ``self._q``."""
+        try:
+            for line in self.proc.stdout:
+                self._q.put(line)
+        except Exception:
+            pass
+
+    def _drain_queue(self) -> None:
+        """Discard everything currently in the queue (non-blocking)."""
+        while True:
+            try:
+                self._q.get_nowait()
+            except queue.Empty:
+                break
 
     def _send(self, cmd: str) -> None:
         self.proc.stdin.write(cmd + "\n")
         self.proc.stdin.flush()
 
-    def _read_until(self, pattern: re.Pattern[str], passes_ok: bool, timeout: float):
-        """Read stdout lines until ``pattern`` matches (return Match) or
-        ``self._PASS_RE`` matches (return ``"pass"`` if passes_ok else
-        None). Times out after ``timeout`` seconds total."""
+    def _read_until(
+        self,
+        pattern: re.Pattern[str],
+        passes_ok: bool,
+        timeout: float,
+    ):
+        """Read queued lines until ``pattern`` matches or timeout expires.
+
+        Returns:
+          re.Match  — the matching line
+          "pass"    — if passes_ok and Edax passes
+          None      — timeout or process died
+        """
         deadline = time.perf_counter() + timeout
         while True:
             remaining = deadline - time.perf_counter()
             if remaining <= 0:
                 return None
-            line = self.proc.stdout.readline()
-            if not line:
-                return None
+            try:
+                # Block at most 0.5 s per iteration so we can recheck the
+                # deadline without getting stuck in queue.get() forever.
+                line = self._q.get(timeout=min(remaining, 0.5))
+            except queue.Empty:
+                continue
             m = pattern.search(line)
             if m:
                 return m
             if passes_ok and self._PASS_RE.search(line):
                 return "pass"
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
 
     def setboard_and_move(
         self,
@@ -134,19 +179,18 @@ class EdaxEngine:
         level: int,
         move_time: float,
     ) -> str | None:
-        """Set board directly via ``setboard``, then ``go``.
+        """Set board via ``setboard``, ask Edax for a move, return it.
 
-        Avoids the fragile ``init`` + ``play <moves>`` replay path
-        (which breaks if BoardArena history contains a PASS — Edax has
-        no ``play pass`` command and silently desyncs).
+        Edax setboard format (board.c::board_set): 64 chars A1..H8
+        row-major (rank 1 first), then a side-to-move char.
+        Convention: 'X' = BLACK, 'O' = WHITE, '-' = empty.
 
-        Edax setboard format (see board.c::board_set): 64 chars for
-        A1..H8 row-major, then a side-to-move char. We use the
-        absolute-color convention 'X' = BLACK, 'O' = WHITE, '-' empty;
-        trailing 'X' if BLACK to move else 'O'.
+        ``board_rows`` is ``state["board"]`` from the Othello env, whose
+        index 0 is rank 8 (display top).  We reverse it so rank 1 comes
+        first, matching Edax's expected ordering.
         """
         chars = []
-        for row in board_rows:  # row[0] = rank 1
+        for row in reversed(board_rows):  # rank 1 first for Edax A1..H8
             for cell in row:
                 if cell == "B":
                     chars.append("X")
@@ -156,16 +200,31 @@ class EdaxEngine:
                     chars.append("-")
         side = "X" if actor == 0 else "O"
         board_str = "".join(chars) + " " + side
+
         with self._lock:
+            # Discard any residual output left from a previous auto-play.
+            self._drain_queue()
+
             self._send(f"setboard {board_str}")
             self._send(f"level {level}")
             self._send(f"move-time 0:00:{move_time:06.3f}")
             self._send("go")
+
+            # First "Edax plays X" — the move we requested.
             result = self._read_until(
                 self._PLAY_RE,
                 passes_ok=True,
-                timeout=move_time + 5.0,
+                timeout=move_time + 10.0,
             )
+            # Drain any CC auto-play response (short timeout — Edax may not
+            # produce one depending on mode; _drain_queue() at call start
+            # handles residual from prior calls).
+            self._read_until(
+                self._PLAY_RE,
+                passes_ok=True,
+                timeout=1.0,
+            )
+
             if result is None:
                 return None
             if result == "pass":
@@ -197,7 +256,6 @@ def make_bot(elo: int, level: int) -> type:
             board = state.get("board")
             actor = state.get("actor", 0)
             legal = state.get("legal_actions", []) or []
-            # PASS is the only legal action when no flips are available.
             if legal == ["PASS"]:
                 return "PASS"
             if not board:
@@ -206,14 +264,11 @@ def make_bot(elo: int, level: int) -> type:
                 board, actor, self._level, self._move_time,
             )
             if move is None:
-                # Edax stuck/dead — fall back to any legal action so we
-                # don't forfeit.
                 return legal[0] if legal else ""
             if move == "PASS":
                 return "PASS" if "PASS" in legal else (legal[0] if legal else "")
             if move in legal:
                 return move
-            # case mismatch
             move_l = move.lower()
             move_u = move.upper()
             for m in (move_l, move_u):

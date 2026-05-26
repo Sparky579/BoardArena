@@ -1,0 +1,145 @@
+{
+  "settings": {
+    "targets": [
+      "baseline/gpt5p5/bot_hard.py",
+      "baseline/claude_opus4p7/bot_hard.py"
+    ],
+    "external_dir": "baseline/external",
+    "games": 4,
+    "timeout": 2.0,
+    "seed": 42,
+    "output": "elo_results.json"
+  },
+  "bots": [
+    {
+      "label": "gpt5p5/bot_hard",
+      "estimated_elo": 2819.5,
+      "total_wins": 28,
+      "total_losses": 0,
+      "total_draws": 0,
+      "matchups": [
+        {
+          "anchor": "bot_edax_1300",
+          "anchor_elo": 1300.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 2219.5
+        },
+        {
+          "anchor": "bot_edax_1500",
+          "anchor_elo": 1500.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 2419.5
+        },
+        {
+          "anchor": "bot_edax_1700",
+          "anchor_elo": 1700.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 2619.5
+        },
+        {
+          "anchor": "bot_edax_1900",
+          "anchor_elo": 1900.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 2819.5
+        },
+        {
+          "anchor": "bot_edax_2100",
+          "anchor_elo": 2100.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 3019.5
+        },
+        {
+          "anchor": "bot_edax_2300",
+          "anchor_elo": 2300.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 3219.5
+        },
+        {
+          "anchor": "bot_edax_2500",
+          "anchor_elo": 2500.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 3419.5
+        }
+      ]
+    },
+    {
+      "label": "claude_opus4p7/bot_hard",
+      "estimated_elo": 2819.5,
+      "total_wins": 28,
+      "total_losses": 0,
+      "total_draws": 0,
+      "matchups": [
+        {
+          "anchor": "bot_edax_1300",
+          "anchor_elo": 1300.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 2219.5
+        },
+        {
+          "anchor": "bot_edax_1500",
+          "anchor_elo": 1500.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 2419.5
+        },
+        {
+          "anchor": "bot_edax_1700",
+          "anchor_elo": 1700.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 2619.5
+        },
+        {
+          "anchor": "bot_edax_1900",
+          "anchor_elo": 1900.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 2819.5
+        },
+        {
+          "anchor": "bot_edax_2100",
+          "anchor_elo": 2100.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 3019.5
+        },
+        {
+          "anchor": "bot_edax_2300",
+          "anchor_elo": 2300.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 3219.5
+        },
+        {
+          "anchor": "bot_edax_2500",
+          "anchor_elo": 2500.0,
+          "wins": 4,
+          "losses": 0,
+          "draws": 0,
+          "performance_elo": 3419.5
+        }
+      ]
+    }
+  ]
+}
