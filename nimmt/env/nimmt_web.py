@@ -20,26 +20,18 @@ from nimmt_env import MAX_PLAYERS, MIN_PLAYERS, BotTimeoutError, NimmtEnv, Syste
 
 
 HERE = Path(__file__).resolve().parent
-GAME_ROOT = HERE.parent
-BASELINE_DIR = GAME_ROOT / "baseline"
-DEFAULT_BOT_ID = "/baseline/bot_greedy"
+BASELINE_DIR = HERE.parent / "baseline"
 
 
 def bot_id_for_path(path: Path) -> str:
-    """nimmt convention: ids relative to the game root, so top-level
-    bots in ``baseline/`` come out as ``/baseline/<stem>`` (matches the
-    pre-discovery hardcoded list)."""
     try:
-        relative = path.resolve().relative_to(GAME_ROOT.resolve())
+        relative = path.resolve().relative_to(BASELINE_DIR.resolve())
         return f"/{relative.with_suffix('').as_posix()}"
     except ValueError:
         return f"/{path.stem}"
 
 
 def discover_bot_paths() -> dict[str, Path]:
-    """Walk ``baseline/`` for ``bot.py`` / ``bot_*.py`` and return a
-    deterministic ``{bot_id: path}`` mapping.
-    """
     bot_paths: dict[str, Path] = {}
     if not BASELINE_DIR.is_dir():
         return bot_paths
@@ -304,7 +296,20 @@ class Handler(BaseHTTPRequestHandler):
         if not path.is_file():
             self.send_error(HTTPStatus.NOT_FOUND)
             return
-        self.send_bytes(path.read_bytes(), STATIC_TYPES.get(path.suffix, "application/octet-stream"))
+        stat = path.stat()
+        etag = f'W/"{stat.st_mtime_ns:x}-{stat.st_size:x}"'
+        if self.headers.get("If-None-Match") == etag:
+            self.send_response(HTTPStatus.NOT_MODIFIED)
+            self.send_header("ETag", etag)
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            return
+        self.send_bytes(
+            path.read_bytes(),
+            STATIC_TYPES.get(path.suffix, "application/octet-stream"),
+            cache_control="no-cache",
+            etag=etag,
+        )
 
     def send_json(self, payload: dict[str, Any]) -> None:
         self.send_bytes(json.dumps(payload, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
@@ -315,11 +320,21 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps({"error": message}, ensure_ascii=False).encode("utf-8"))
 
-    def send_bytes(self, payload: bytes, content_type: str) -> None:
+    def send_bytes(
+        self,
+        payload: bytes,
+        content_type: str,
+        *,
+        cache_control: str | None = None,
+        etag: str | None = None,
+    ) -> None:
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(payload)))
-        self.send_header("Cache-Control", "no-cache")
+        if cache_control is not None:
+            self.send_header("Cache-Control", cache_control)
+        if etag is not None:
+            self.send_header("ETag", etag)
         self.end_headers()
         self.wfile.write(payload)
 
@@ -345,14 +360,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run the BoardArena nimmt browser UI")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8040)
-    parser.add_argument(
-        "--bot", type=Path, default=None,
-        help="optional extra bot path to mount under its discovered id",
-    )
-    parser.add_argument(
-        "--default-bot", default=DEFAULT_BOT_ID,
-        help="default bot id selected in the UI (must be a discovered id)",
-    )
+    parser.add_argument("--bot", type=Path, default=None, help="optional bot path to register")
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--no-open", action="store_true")
     args = parser.parse_args()
@@ -362,12 +370,13 @@ def main() -> int:
         bot_paths[bot_id_for_path(args.bot)] = args.bot
     if not bot_paths:
         raise SystemExit(f"no bots discovered under {BASELINE_DIR}")
-    default_bot = args.default_bot if args.default_bot in bot_paths else next(iter(bot_paths))
-    args.default_bot = default_bot
+    args.default_bot = getattr(args, "default_bot", None) or next(iter(bot_paths))
+    if args.default_bot not in bot_paths:
+        args.default_bot = next(iter(bot_paths))
+
     server, port = bind_server(args, bot_paths)
     url = f"http://{args.host}:{port}/"
     print(f"BoardArena nimmt UI: {url}")
-    print(f"Loaded {len(bot_paths)} bots; default: {default_bot}")
     if not args.no_open:
         threading.Timer(0.4, lambda: webbrowser.open(url)).start()
     server.serve_forever()

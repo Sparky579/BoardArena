@@ -21,7 +21,6 @@ from uno_env import DEFAULT_MAX_PLIES, BotTimeoutError, UnoEnv, SystemBot, choos
 
 HERE = Path(__file__).resolve().parent
 BASELINE_DIR = HERE.parent / "baseline"
-DEFAULT_BOT_ID = "/gpt/bot_hard"
 
 
 def bot_id_for_path(path: Path) -> str:
@@ -33,10 +32,6 @@ def bot_id_for_path(path: Path) -> str:
 
 
 def discover_bot_paths() -> dict[str, Path]:
-    """Walk ``baseline/`` for ``bot.py`` / ``bot_*.py`` and return a
-    deterministic ``{bot_id: path}`` mapping. New bots are picked up
-    just by dropping the file in the right baseline subdirectory.
-    """
     bot_paths: dict[str, Path] = {}
     if not BASELINE_DIR.is_dir():
         return bot_paths
@@ -387,14 +382,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run the BoardArena UNO browser UI")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8060)
-    parser.add_argument(
-        "--bot", type=Path, default=None,
-        help="optional extra bot path to mount under its discovered id",
-    )
-    parser.add_argument(
-        "--default-bot", default=DEFAULT_BOT_ID,
-        help="default bot id selected in the UI (must be a discovered id)",
-    )
+    parser.add_argument("--bot", type=Path, default=None, help="optional bot path to register")
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--max-plies", type=int, default=DEFAULT_MAX_PLIES)
     parser.add_argument("--no-open", action="store_true")
@@ -404,13 +392,13 @@ def main() -> int:
         args.bot_paths[bot_id_for_path(args.bot)] = args.bot
     if not args.bot_paths:
         raise SystemExit(f"no bots discovered under {BASELINE_DIR}")
+    args.default_bot = getattr(args, "default_bot", None) or next(iter(args.bot_paths))
     if args.default_bot not in args.bot_paths:
         args.default_bot = next(iter(args.bot_paths))
 
     server, port = bind_server(args)
     url = f"http://{args.host}:{port}/"
     print(f"BoardArena UNO UI: {url}")
-    print(f"Loaded {len(args.bot_paths)} bots; default: {args.default_bot}")
     if not args.no_open:
         threading.Timer(0.4, lambda: webbrowser.open(url)).start()
     server.serve_forever()
