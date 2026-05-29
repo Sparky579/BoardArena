@@ -1,0 +1,39 @@
+{
+  "game": "skull",
+  "games": 100,
+  "games_completed": 100,
+  "decision_timeout": 3.0,
+  "bots": [
+    "bot_easy",
+    "bot_hard",
+    "bot_simple"
+  ],
+  "matchups": [
+    {
+      "bot_a": "bot_easy",
+      "bot_b": "bot_hard",
+      "a_wins": 0,
+      "b_wins": 0,
+      "draws": 100
+    },
+    {
+      "bot_a": "bot_easy",
+      "bot_b": "bot_simple",
+      "a_wins": 0,
+      "b_wins": 100,
+      "draws": 0
+    },
+    {
+      "bot_a": "bot_hard",
+      "bot_b": "bot_simple",
+      "a_wins": 0,
+      "b_wins": 100,
+      "draws": 0
+    }
+  ],
+  "standings": {
+    "bot_simple": 1687.8,
+    "bot_easy": 1406.1,
+    "bot_hard": 1406.1
+  }
+}

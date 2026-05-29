@@ -1,0 +1,23 @@
+{
+  "game": "uno",
+  "games_per_matchup": 100,
+  "decision_timeout": 3.0,
+  "max_plies": 500,
+  "bots": [
+    "gpt/bot_easy",
+    "gpt/bot_hard"
+  ],
+  "matchups": [
+    {
+      "bot_a": "gpt/bot_easy",
+      "bot_b": "gpt/bot_hard",
+      "a_wins": 47,
+      "b_wins": 53,
+      "draws": 0
+    }
+  ],
+  "standings": {
+    "gpt/bot_hard": 1508.9,
+    "gpt/bot_easy": 1491.1
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "game": "nimmt",
+  "games": 100,
+  "games_completed": 100,
+  "decision_timeout": 3.0,
+  "bots": [
+    "bot_easy",
+    "bot_greedy",
+    "bot_hard",
+    "bot_random"
+  ],
+  "matchups": [
+    {
+      "bot_a": "bot_easy",
+      "bot_b": "bot_greedy",
+      "a_wins": 43,
+      "b_wins": 52,
+      "draws": 5
+    },
+    {
+      "bot_a": "bot_easy",
+      "bot_b": "bot_hard",
+      "a_wins": 70,
+      "b_wins": 29,
+      "draws": 1
+    },
+    {
+      "bot_a": "bot_easy",
+      "bot_b": "bot_random",
+      "a_wins": 77,
+      "b_wins": 22,
+      "draws": 1
+    },
+    {
+      "bot_a": "bot_greedy",
+      "bot_b": "bot_hard",
+      "a_wins": 67,
+      "b_wins": 29,
+      "draws": 4
+    },
+    {
+      "bot_a": "bot_greedy",
+      "bot_b": "bot_random",
+      "a_wins": 74,
+      "b_wins": 23,
+      "draws": 3
+    },
+    {
+      "bot_a": "bot_hard",
+      "bot_b": "bot_random",
+      "a_wins": 60,
+      "b_wins": 37,
+      "draws": 3
+    }
+  ],
+  "standings": {
+    "bot_greedy": 1562.0,
+    "bot_easy": 1555.0,
+    "bot_hard": 1464.7,
+    "bot_random": 1418.4
+  }
+}
