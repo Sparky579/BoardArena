@@ -1,0 +1,39 @@
+{
+  "game": "gomoku",
+  "games_per_matchup": 100,
+  "decision_timeout": 3.0,
+  "max_plies": 225,
+  "bots": [
+    "claude_opus4p7/bot_easy",
+    "claude_opus4p7/bot_hard",
+    "deepseek_v4/bot_hard"
+  ],
+  "matchups": [
+    {
+      "bot_a": "claude_opus4p7/bot_easy",
+      "bot_b": "claude_opus4p7/bot_hard",
+      "a_wins": 0,
+      "b_wins": 100,
+      "draws": 0
+    },
+    {
+      "bot_a": "claude_opus4p7/bot_easy",
+      "bot_b": "deepseek_v4/bot_hard",
+      "a_wins": 0,
+      "b_wins": 100,
+      "draws": 0
+    },
+    {
+      "bot_a": "claude_opus4p7/bot_hard",
+      "bot_b": "deepseek_v4/bot_hard",
+      "a_wins": 85,
+      "b_wins": 15,
+      "draws": 0
+    }
+  ],
+  "standings": {
+    "claude_opus4p7/bot_hard": 1660.6,
+    "deepseek_v4/bot_hard": 1528.6,
+    "claude_opus4p7/bot_easy": 1310.8
+  }
+}
