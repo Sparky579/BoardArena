@@ -271,6 +271,76 @@ python .\uno\env\uno_env.py battle --bot .\uno\baseline\gpt\bot_hard.py --games 
 - `uno/doc/GAME_RULE.md`
 - `uno/doc/BOT_API.md`
 
+## ELO Benchmark
+
+各游戏 Bot 的 ELO 评分汇总。Othello 采用 Edax 锚点法（绝对 ELO），其余游戏采用组内 round-robin 相对 ELO（初始值 1500）。
+
+### 路墙棋（lqq）
+
+Double round-robin，每对 2 局（先后手各一），`decision_timeout = 1.5s`。数据来源：[`lqq/arena/elo_results_v4.json`](lqq/arena/elo_results_v4.json)。
+
+| 排名 | Bot | ELO | W | L | D |
+|:---:|-----|----:|--:|--:|--:|
+| 1 | gemini-cli/bot_v2.1 | 1582 | 8 | 2 | 0 |
+| 2 | gemini-cli/bot_v2 | 1545 | 7 | 3 | 0 |
+| 3 | claude-opus4p7/bot_hard_mcts | 1530 | 6 | 4 | 0 |
+| 4 | claude-new/bot_v2 | 1500 | 5 | 5 | 0 |
+| 5 | gpt-hard/bot | 1476 | 4 | 6 | 0 |
+| 6 | gemini-cli/bot_v3 | 1367 | 0 | 10 | 0 |
+
+### Gomoku
+
+每对 100 局，`decision_timeout = 3.0s`。数据来源：[`gomoku/tourney_results.json`](gomoku/tourney_results.json)。
+
+| 排名 | Bot | ELO | W | L | D |
+|:---:|-----|----:|--:|--:|--:|
+| 1 | claude_opus4p7/bot_hard | 1661 | 185 | 15 | 0 |
+| 2 | deepseek_v4/bot_hard | 1529 | 115 | 85 | 0 |
+| 3 | claude_opus4p7/bot_easy | 1311 | 0 | 200 | 0 |
+
+### Othello
+
+锚点：Edax（1300 / 1500 / 1700 / 1900 / 2100 / 2300 / 2500），每对 4 局，格式 W-L-D。数据来源：[`Othello/elo_results.json`](Othello/elo_results.json)。
+
+| Bot | ELO | vs 1300 | vs 1500 | vs 1700 | vs 1900 | vs 2100 | vs 2300 | vs 2500 |
+|-----|----:|:-------:|:-------:|:-------:|:-------:|:-------:|:-------:|:-------:|
+| gpt5p5/bot_hard | 2819 | 4-0-0 | 4-0-0 | 4-0-0 | 4-0-0 | 4-0-0 | 4-0-0 | 4-0-0 |
+| claude_opus4p7/bot_hard | 2819 | 4-0-0 | 4-0-0 | 4-0-0 | 4-0-0 | 4-0-0 | 4-0-0 | 4-0-0 |
+
+> 运行方式见 [`Othello/run_elo.py`](Othello/run_elo.py)。
+
+### nimmt
+
+每对 100 局（2 人对战），`decision_timeout = 3.0s`。数据来源：[`nimmt/tourney_results.json`](nimmt/tourney_results.json)。
+
+| 排名 | Bot | ELO | W | L | D |
+|:---:|-----|----:|--:|--:|--:|
+| 1 | bot_greedy | 1562 | 193 | 95 | 12 |
+| 2 | bot_easy | 1555 | 190 | 103 | 7 |
+| 3 | bot_hard | 1465 | 118 | 174 | 8 |
+| 4 | bot_random | 1418 | 82 | 211 | 7 |
+
+### Skull
+
+每对 100 局，`decision_timeout = 3.0s`。数据来源：[`skull/tourney_results.json`](skull/tourney_results.json)。
+
+| 排名 | Bot | ELO | W | L | D |
+|:---:|-----|----:|--:|--:|--:|
+| 1 | bot_simple | 1688 | 200 | 0 | 0 |
+| 2 | bot_easy | 1406 | 0 | 100 | 100 |
+| 2 | bot_hard | 1406 | 0 | 100 | 100 |
+
+> `bot_easy` 与 `bot_hard` 的 100 局对战全部平局。
+
+### UNO
+
+每对 100 局，`decision_timeout = 3.0s`。数据来源：[`uno/tourney_results.json`](uno/tourney_results.json)。
+
+| 排名 | Bot | ELO | W | L | D |
+|:---:|-----|----:|--:|--:|--:|
+| 1 | gpt/bot_hard | 1509 | 53 | 47 | 0 |
+| 2 | gpt/bot_easy | 1491 | 47 | 53 | 0 |
+
 ## Bot 接口约定
 
 每个游戏目录下都有自己的 `doc/BOT_API.md`。通用约定是：
